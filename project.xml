@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project>
+
+    <meta title="Cannon" package="io.schteppe.cannon" version="1.0.0" company="Schteppe" />
+    <app main="Main" path="Export" file="Cannon" />
+
+    <source path="Source" />
+
+    <haxelib name="openfl" />
+
+    <source path="Assets" />
+    <icon path="Assets/nme.svg" />
+
+</project>

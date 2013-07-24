@@ -4,6 +4,7 @@
 # Temp files
 *~
 *#
+Export/*
 
 # Node Modules
 node_modules/*
