@@ -85,9 +85,9 @@ class Mat3 {
         if (target == null) target = new Vec3();
 
         var e = this.elements;
-        var x = v.x;
-        var y = v.y;
-        var z = v.z;
+        var x:Float = v.x;
+        var y:Float = v.y;
+        var z:Float = v.z;
         target.x = e[0]*x + e[1]*y + e[2]*z;
         target.y = e[3]*x + e[4]*y + e[5]*z;
         target.z = e[6]*x + e[7]*y + e[8]*z;
@@ -118,7 +118,7 @@ class Mat3 {
         var r = new Mat3();
         for(i in 0...3){
             for(j in 0...3){
-                var sum = 0.0;
+                var sum:Float = 0.0;
                 for(k in 0...3){
                     sum += m.elements[i+k*3] * this.elements[k+j*3];
                 }
@@ -247,8 +247,8 @@ class Mat3 {
      * @return string
      */
     public function toString():String{
-        var r = "";
-        var sep = ",";
+        var r:String = "";
+        var sep:String = ",";
         for(i in 0...9){
             r += this.elements[i] + sep;
         }
@@ -311,7 +311,7 @@ class Mat3 {
             }
             if (eqns[i+nc*i] != 0) {
                 for (j in (i + 1)...k) {
-                    var multiplier = eqns[i+nc*j] / eqns[i+nc*i];
+                    var multiplier:Float = eqns[i+nc*j] / eqns[i+nc*i];
                     np = kp;
                     do { // do line( k ) = line( k ) - multiplier * line( i )
                         p = kp - np;
@@ -326,7 +326,7 @@ class Mat3 {
         do {
             j = i-1;
             do {
-                var multiplier = eqns[i+nc*j] / eqns[i+nc*i];
+                var multiplier:Float = eqns[i+nc*j] / eqns[i+nc*i];
                 np = nc;
                 do {
                     p = nc - np;
@@ -338,7 +338,7 @@ class Mat3 {
         // operations on the diagonal
         i = 2;
         do {
-            var multiplier = 1 / eqns[i+nc*i];
+            var multiplier:Float = 1 / eqns[i+nc*i];
             np = nc;
             do {
                 p = nc - np;

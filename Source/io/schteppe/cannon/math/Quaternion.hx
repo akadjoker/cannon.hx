@@ -79,7 +79,7 @@ class Quaternion {
      * @param float angle in radians
      */
     public function setFromAxisAngle(axis,angle):Void{
-        var s = Math.sin(angle*0.5);
+        var s:Float = Math.sin(angle*0.5);
         this.x = axis.x * s;
         this.y = axis.y * s;
         this.z = axis.z * s;
@@ -90,8 +90,8 @@ class Quaternion {
     public function toAxisAngle(targetAxis):Dynamic{
         if (targetAxis == null) targetAxis = new Vec3();
         this.normalize(); // if w>1 acos and sqrt will produce errors, this cant happen if quaternion is normalised
-        var angle = 2 * Math.acos(this.w);
-        var s = Math.sqrt(1-this.w*this.w); // assuming quaternion normalised then w is less than 1, so term always positive.
+        var angle:Float = 2 * Math.acos(this.w);
+        var s:Float = Math.sqrt(1-this.w*this.w); // assuming quaternion normalised then w is less than 1, so term always positive.
         if (s < 0.001) { // test to avoid divide by zero, s is always positive due to sqrt
             // if s close to zero then direction of axis not important
             targetAxis.x = this.x; // if it is important that axis is normalised then replace with x=1; y=z=0;
@@ -131,7 +131,7 @@ class Quaternion {
      */
     public function mult(q:Quaternion,target:Quaternion):Quaternion{
         if (target == null) target = new Quaternion();
-        var w = this.w;
+        var w:Float = this.w;
         var va = Quaternion_mult_va;
         var vb = Quaternion_mult_vb;
         var vaxvb = Quaternion_mult_vaxvb;
@@ -156,11 +156,11 @@ class Quaternion {
      * @return Quaternion
      */
     public function inverse(target):Quaternion{
-        var x = this.x; var y = this.y; var z = this.z; var w = this.w;
+        var x:Float = this.x; var y:Float = this.y; var z:Float = this.z; var w:Float = this.w;
         if (target == null) target = new Quaternion();
 
         this.conjugate(target);
-        var inorm2 = 1/(x*x + y*y + z*z + w*w);
+        var inorm2:Float = 1/(x*x + y*y + z*z + w*w);
         target.x *= inorm2;
         target.y *= inorm2;
         target.z *= inorm2;
@@ -292,11 +292,11 @@ class Quaternion {
         if (order == null) order = "YZX";
 
         var heading:Float = 0.0; var attitude:Float = 0.0; var bank:Float = 0.0;
-        var x = this.x; var y = this.y; var z = this.z; var w = this.w;
+        var x:Float = this.x; var y:Float = this.y; var z:Float = this.z; var w:Float = this.w;
 
         switch(order){
         case "YZX":
-            var test = x*y + z*w;
+            var test:Float = x*y + z*w;
             if (test > 0.499) { // singularity at north pole
                 heading = 2 * Math.atan2(x,w);
                 attitude = Math.PI/2;
@@ -308,9 +308,9 @@ class Quaternion {
                 bank = 0;
             }
             if(Math.isNaN(heading)){
-                var sqx = x*x;
-                var sqy = y*y;
-                var sqz = z*z;
+                var sqx:Float = x*x;
+                var sqy:Float = y*y;
+                var sqz:Float = z*z;
                 heading = Math.atan2(2*y*w - 2*x*z , 1 - 2*sqy - 2*sqz); // Heading
                 attitude = Math.asin(2*test); // attitude
                 bank = Math.atan2(2*x*w - 2*y*z , 1 - 2*sqx - 2*sqz); // bank

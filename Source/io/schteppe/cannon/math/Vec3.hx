@@ -44,7 +44,7 @@ class Vec3 {
      * @return Vec3
      */
     public function cross(v:Vec3,target:Vec3 = null):Vec3{
-        var vx = v.x; var vy = v.y; var vz = v.z; var x = this.x; var y = this.y; var z = this.z;
+        var vx:Float = v.x; var vy:Float = v.y; var vz:Float = v.z; var x:Float = this.x; var y:Float = this.y; var z:Float = this.z;
         if (target == null) target = new Vec3();
 
         target.x = (y * vz) - (z * vy);
@@ -133,10 +133,10 @@ class Vec3 {
      * @return float Returns the norm of the vector
      */
     public function normalize():Float{
-        var x = this.x; var y = this.y; var z = this.z;
-        var n = Math.sqrt(x*x + y*y + z*z);
+        var x:Float = this.x; var y:Float = this.y; var z:Float = this.z;
+        var n:Float = Math.sqrt(x*x + y*y + z*z);
         if(n>0.0){
-            var invN = 1/n;
+            var invN:Float = 1/n;
             this.x *= invN;
             this.y *= invN;
             this.z *= invN;
@@ -158,8 +158,8 @@ class Vec3 {
      */
     public function unit(target):Vec3{
         if (target == null) target = new Vec3();
-        var x = this.x; var y = this.y; var z = this.z;
-        var ninv = Math.sqrt(x*x + y*y + z*z);
+        var x:Float = this.x; var y:Float = this.y; var z:Float = this.z;
+        var ninv:Float = Math.sqrt(x*x + y*y + z*z);
         if(ninv>0.0){
             ninv = 1.0/ninv;
             target.x = x * ninv;
@@ -180,7 +180,7 @@ class Vec3 {
      * @return float
      */
     public function norm():Float{
-        var x=this.x, y=this.y, z=this.z;
+        var x:Float = this.x; var y:Float = this.y; var z:Float = this.z;
         return Math.sqrt(x*x + y*y + z*z);
     }
 
@@ -195,8 +195,8 @@ class Vec3 {
     }
 
     public function distanceTo(p):Float{
-        var x=this.x, y=this.y, z=this.z;
-        var px=p.x, py=p.y, pz=p.z;
+        var x:Float = this.x; var y:Float = this.y; var z:Float = this.z;
+        var px:Float = p.x; var py:Float = p.y; var pz:Float = p.z;
         return Math.sqrt((px-x)*(px-x)+
                          (py-y)*(py-y)+
                          (pz-z)*(pz-z));
@@ -212,9 +212,9 @@ class Vec3 {
      */
     public function mult(scalar:Float,target:Vec3 = null):Vec3{
         if (target == null) target = new Vec3();
-        var x = this.x;
-        var y = this.y;
-        var z = this.z;
+        var x:Float = this.x;
+        var y:Float = this.y;
+        var z:Float = this.z;
         target.x = scalar * x;
         target.y = scalar * y;
         target.z = scalar * z;
@@ -264,10 +264,10 @@ class Vec3 {
      * @param Vec3 t2 Vector object to save the second tangent in
      */
     public function tangents(t1:Vec3,t2:Vec3){
-        var norm = this.norm();
+        var norm:Float = this.norm();
         if(norm>0.0){
             var n = Vec3_tangents_n;
-            var inorm = 1/norm;
+            var inorm:Float = 1/norm;
             n.set(this.x*inorm,this.y*inorm,this.z*inorm);
             var randVec = Vec3_tangents_randVec;
             if(Math.abs(n.x) < 0.9){
@@ -320,7 +320,7 @@ class Vec3 {
      * @param Vec3 target
      */
     public function lerp(v:Vec3,t:Float,target:Vec3):Void{
-        var x=this.x, y=this.y, z=this.z;
+        var x:Float = this.x; var y:Float = this.y; var z:Float = this.z;
         target.x = x + (v.x-x)*t;
         target.y = y + (v.y-y)*t;
         target.z = z + (v.z-z)*t;

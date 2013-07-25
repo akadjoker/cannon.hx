@@ -419,7 +419,7 @@ class World extends EventTarget {
         var doProfiling = this.doProfiling;
         var profile = this.profile;
         var DYNAMIC:Int = Body.DYNAMIC;
-        var now = this._now;
+        var now:Dynamic = this._now;
         var profilingStart:Float = 0;
         var constraints = this.constraints;
         var frictionEquation = FrictionEquation;
@@ -441,8 +441,8 @@ class World extends EventTarget {
         // Add gravity to all objects
         for(bi in bodies){
             if ((bi.motionstate & DYNAMIC) != 0) { // Only for dynamic bodies
-                var f = bi.force;
-                var m = bi.mass;
+                var f:Vec3 = bi.force;
+                var m:Float = bi.mass;
                 f.x += m*gx;
                 f.y += m*gy;
                 f.z += m*gz;
@@ -616,12 +616,12 @@ class World extends EventTarget {
         for(i in 0...N){
             var bi = bodies[i];
             if((bi.motionstate & DYNAMIC) != 0){ // Only for dynamic bodies
-                var ld = pow(1.0 - bi.linearDamping,dt);
-                var v = bi.velocity;
+                var ld:Float = pow(1.0 - bi.linearDamping,dt);
+                var v:Vec3 = bi.velocity;
                 v.mult(ld,v);
                 var av = bi.angularVelocity;
                 if(av != null){
-                    var ad = pow(1.0 - bi.angularDamping,dt);
+                    var ad:Float = pow(1.0 - bi.angularDamping,dt);
                     av.mult(ad,av);
                 }
             }
