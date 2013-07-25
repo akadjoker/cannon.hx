@@ -232,53 +232,57 @@ class ContactGenerator {
         return true;
     }
 
-    function sphereBox(result,si,sj,xi,xj,qi,qj,bi,bj){
+    function sphereBox(result:Array<Dynamic>,si:Dynamic,sj:Dynamic,xi:Vec3,xj:Vec3,qi:Quaternion,qj:Quaternion,bi:Body,bj:Body){
         // we refer to the box as body j
-        /*var sides = sphereBox_sides;
+        var sides:Array<Vec3> = sphereBox_sides;
         xi.vsub(xj,box_to_sphere);
         sj.getSideNormals(sides,qj);
-        var R =     si.radius;
-        var penetrating_sides = [];
+        var R:Float =     si.radius;
+        var penetrating_sides:Array<Dynamic> = [];
 
         // Check side (plane) intersections
-        var found = false;
+        var found:Bool = false;
 
         // Store the resulting side penetration info
-        var side_ns = sphereBox_side_ns;
-        var side_ns1 = sphereBox_side_ns1;
-        var side_ns2 = sphereBox_side_ns2;
-        var side_h = null;
-        var side_penetrations = 0;
-        var side_dot1 = 0;
-        var side_dot2 = 0;
-        var side_distance = null;
-        for(var idx=0,nsides=sides.length; idx!==nsides && found===false; idx++){
+        var side_ns:Vec3 = sphereBox_side_ns;
+        var side_ns1:Vec3 = sphereBox_side_ns1;
+        var side_ns2:Vec3 = sphereBox_side_ns2;
+        var side_h:Float = Math.POSITIVE_INFINITY;
+        var side_penetrations:Int = 0;
+        var side_dot1:Float = 0;
+        var side_dot2:Float = 0;
+        var side_distance:Float = Math.POSITIVE_INFINITY;
+        var side_distance_set:Bool = false;
+        var nsides:Int = sides.length;
+        for (idx in 0...nsides) {
+            if (found) break;
             // Get the plane side normal (ns)
             var ns = sphereBox_ns;
             sides[idx].copy(ns);
 
-            var h = ns.norm();
+            var h:Float = ns.norm();
             ns.normalize();
 
             // The normal/distance dot product tells which side of the plane we are
-            var dot = box_to_sphere.dot(ns);
+            var dot:Float = box_to_sphere.dot(ns);
 
             if(dot<h+R && dot>0){
                 // Intersects plane. Now check the other two dimensions
-                var ns1 = sphereBox_ns1;
-                var ns2 = sphereBox_ns2;
+                var ns1:Vec3 = sphereBox_ns1;
+                var ns2:Vec3 = sphereBox_ns2;
                 sides[(idx+1)%3].copy(ns1);
                 sides[(idx+2)%3].copy(ns2);
-                var h1 = ns1.norm();
-                var h2 = ns2.norm();
+                var h1:Float = ns1.norm();
+                var h2:Float = ns2.norm();
                 ns1.normalize();
                 ns2.normalize();
-                var dot1 = box_to_sphere.dot(ns1);
-                var dot2 = box_to_sphere.dot(ns2);
+                var dot1:Float = box_to_sphere.dot(ns1);
+                var dot2:Float = box_to_sphere.dot(ns2);
                 if(dot1<h1 && dot1>-h1 && dot2<h2 && dot2>-h2){
-                    var dist = Math.abs(dot-h-R);
-                    if(side_distance===null || dist < side_distance){
+                    var dist:Float = Math.abs(dot-h-R);
+                    if(!side_distance_set || dist < side_distance){
                         side_distance = dist;
+                        side_distance_set = true;
                         side_dot1 = dot1;
                         side_dot2 = dot2;
                         side_h = h;
@@ -290,7 +294,7 @@ class ContactGenerator {
                 }
             }
         }
-        if(side_penetrations){
+        if(side_penetrations != 0){
             found = true;
             var r = makeResult(bi,bj);
             side_ns.mult(-R,r.ri); // Sphere r
@@ -305,23 +309,26 @@ class ContactGenerator {
         }
 
         // Check corners
-        var rj = v3pool.get();
+        var rj:Vec3 = v3pool.get();
         var sphere_to_corner = sphereBox_sphere_to_corner;
-        for(var j=0; j!==2 && !found; j++){
-            for(var k=0; k!==2 && !found; k++){
-                for(var l=0; l!==2 && !found; l++){
+        for (j in 0...2) {
+            if (found) break; 
+            for (k in 0...2) {
+                if (found) break;  
+                for (l in 0...2) {
+                    if (found) break;  
                     rj.set(0,0,0);
-                    if(j){
+                    if(j != 0){
                         rj.vadd(sides[0],rj);
                     } else {
                         rj.vsub(sides[0],rj);
                     }
-                    if(k){
+                    if(k != 0){
                         rj.vadd(sides[1],rj);
                     } else {
                         rj.vsub(sides[1],rj);
                     }
-                    if(l){
+                    if(l != 0){
                         rj.vadd(sides[2],rj);
                     } else {
                         rj.vsub(sides[2],rj);
@@ -344,7 +351,7 @@ class ContactGenerator {
                 }
             }
         }
-        v3pool.release(rj);
+        v3pool.release([rj]);
         rj = null;
 
         // Check edges
@@ -354,9 +361,11 @@ class ContactGenerator {
         var orthogonal = v3pool.get();
         var dist = v3pool.get();
         var Nsides = sides.length;
-        for(var j=0; j!==Nsides && !found; j++){
-            for(var k=0; k!==Nsides && !found; k++){
-                if(j%3 !== k%3){
+        for(j in 0...Nsides){
+            if (found) break;
+            for (k in 0...Nsides) {
+                if (found) break; 
+                if(j%3 != k%3){
                     // Get edge tangent
                     sides[k].cross(sides[j],edgeTangent);
                     edgeTangent.normalize();
@@ -364,12 +373,12 @@ class ContactGenerator {
                     xi.copy(r);
                     r.vsub(edgeCenter,r);
                     r.vsub(xj,r);
-                    var orthonorm = r.dot(edgeTangent); // distance from edge center to sphere center in the tangent direction
+                    var orthonorm:Float = r.dot(edgeTangent); // distance from edge center to sphere center in the tangent direction
                     edgeTangent.mult(orthonorm,orthogonal); // Vector from edge center to sphere center in the tangent direction
 
                     // Find the third side orthogonal to this one
                     var l = 0;
-                    while(l===j%3 || l===k%3){
+                    while(l==j%3 || l==k%3){
                         l++;
                     }
 
@@ -402,7 +411,7 @@ class ContactGenerator {
                 }
             }
         }
-        v3pool.release(edgeTangent,edgeCenter,r,orthogonal,dist);*/
+        v3pool.release([edgeTangent,edgeCenter,r,orthogonal,dist]);
     }
 
     function sphereConvex(result,si,sj,xi,xj,qi,qj,bi,bj){
@@ -573,7 +582,7 @@ class ContactGenerator {
     }
 
     function planeBox(result,si,sj,xi,xj,qi,qj,bi,bj){
-        //planeConvex(result,si,sj.convexPolyhedronRepresentation,xi,xj,qi,qj,bi,bj);
+        planeConvex(result,si,sj.convexPolyhedronRepresentation,xi,xj,qi,qj,bi,bj);
     }
 
     /*
@@ -623,21 +632,21 @@ class ContactGenerator {
         }*/
     }
 
-    function planeConvex(result,si,sj,xi,xj,qi,qj,bi,bj){
+    function planeConvex(result:Array<Dynamic>,si:Dynamic,sj:Dynamic,xi:Vec3,xj:Vec3,qi:Quaternion,qj:Quaternion,bi:Body,bj:Body){
         // Simply return the points behind the plane.
-        /*var v = planeConvex_v;
+        var v = planeConvex_v;
         var normal = planeConvex_normal;
         normal.set(0,0,1);
         qi.vmult(normal,normal); // Turn normal according to plane orientation
         var relpos = planeConvex_relpos;
-        for(var i=0; i!==sj.vertices.length; i++){
+        for(i in 0...sj.vertices.length){
             sj.vertices[i].copy(v);
             // Transform to world coords
             qj.vmult(v,v);
             xj.vadd(v,v);
             v.vsub(xi,relpos);
 
-            var dot = normal.dot(relpos);
+            var dot:Float = normal.dot(relpos);
             if(dot<=0.0){
                 // Get vertex position projected on plane
                 var projected = planeConvex_projected;
@@ -654,7 +663,7 @@ class ContactGenerator {
 
                 result.push(r);
             }
-        }*/
+        }
     }
 
     function convexConvex(result,si,sj,xi,xj,qi,qj,bi,bj){
@@ -867,8 +876,7 @@ class ContactGenerator {
                 case 2: //Shape.types.PLANE: // sphere-plane
                     spherePlane(result, si, sj, xi, xj, qi, qj, bi, bj);
                 case 4: //Shape.types.BOX: // sphere-box
-                    throw "Not Implemented";
-                    //sphereBox(result,si,sj,xi,xj,qi,qj,bi,bj);
+                    sphereBox(result,si,sj,xi,xj,qi,qj,bi,bj);
                 case 8: //Shape.types.COMPOUND: // sphere-compound
                     throw "Not Implemented";
                     //recurseCompound(result,si,sj,xi,xj,qi,qj,bi,bj);
@@ -885,8 +893,7 @@ class ContactGenerator {
                 case 2: //types.PLANE: // plane-plane
                     throw "Plane-plane collision... wait, you did WHAT?";
                 case 4: //types.BOX: // plane-box
-                    throw "Not Implemented";
-                    //planeBox(result,si,sj,xi,xj,qi,qj,bi,bj);
+                    planeBox(result,si,sj,xi,xj,qi,qj,bi,bj);
                 case 8: //types.COMPOUND: // plane-compound
                     throw "Not Implemented";
                     //recurseCompound(result,si,sj,xi,xj,qi,qj,bi,bj);
