@@ -414,7 +414,7 @@ class ContactGenerator {
         v3pool.release([edgeTangent,edgeCenter,r,orthogonal,dist]);
     }
 
-    function sphereConvex(result,si,sj,xi,xj,qi,qj,bi,bj){
+    function sphereConvex(result:Array<Dynamic>,si:Dynamic,sj:Dynamic,xi:Vec3,xj:Vec3,qi:Quaternion,qj:Quaternion,bi:Body,bj:Body){
         /*xi.vsub(xj,convex_to_sphere);
         var normals = sj.faceNormals;
         var faces = sj.faces;
@@ -581,7 +581,7 @@ class ContactGenerator {
         }*/
     }
 
-    function planeBox(result,si,sj,xi,xj,qi,qj,bi,bj){
+    function planeBox(result:Array<Dynamic>,si:Dynamic,sj:Dynamic,xi:Vec3,xj:Vec3,qi:Quaternion,qj:Quaternion,bi:Body,bj:Body){
         planeConvex(result,si,sj.convexPolyhedronRepresentation,xi,xj,qi,qj,bi,bj);
     }
 
@@ -590,7 +590,7 @@ class ContactGenerator {
      * @param Shape si
      * @param CompoundShape sj
      */
-    function recurseCompound(result,si,sj,xi,xj,qi,qj,bi,bj){
+    function recurseCompound(result:Array<Dynamic>,si:Dynamic,sj:Dynamic,xi:Vec3,xj:Vec3,qi:Quaternion,qj:Quaternion,bi:Body,bj:Body){
         /*var v3pool = recurseCompound_v3pool;
         var quatPool = recurseCompound_quatpool;
         var nr = 0;
@@ -666,14 +666,14 @@ class ContactGenerator {
         }
     }
 
-    function convexConvex(result,si,sj,xi,xj,qi,qj,bi,bj){
-        /*var sepAxis = convexConvex_sepAxis;
+    function convexConvex(result:Array<Dynamic>,si:Dynamic,sj:Dynamic,xi:Vec3,xj:Vec3,qi:Quaternion,qj:Quaternion,bi:Body,bj:Body){
+        var sepAxis = convexConvex_sepAxis;
         if(si.findSeparatingAxis(sj,xi,qi,xj,qj,sepAxis)){
             var res = [];
             var q = convexConvex_q;
             si.clipAgainstHull(xi,qi,sj,xj,qj,sepAxis,-100,100,res);
             //console.log(res.length);
-            for(var j=0; j!==res.length; j++){
+            for(j in 0...res.length){
                 var r = makeResult(bi,bj);
                 sepAxis.negate(r.ni);
                 res[j].normal.negate(q);
@@ -685,16 +685,16 @@ class ContactGenerator {
                 r.ri.vsub(xi,r.ri);
                 result.push(r);
             }
-        }*/
+        }
     }
 
-    function particlePlane(result,si,sj,xi,xj,qi,qj,bi,bj){
-        /*var normal = particlePlane_normal;
+    function particlePlane(result:Array<Dynamic>,si:Dynamic,sj:Dynamic,xi:Vec3,xj:Vec3,qi:Quaternion,qj:Quaternion,bi:Body,bj:Body){
+        var normal = particlePlane_normal;
         normal.set(0,0,1);
         bj.quaternion.vmult(normal,normal); // Turn normal according to plane orientation
         var relpos = particlePlane_relpos;
         xi.vsub(bj.position,relpos);
-        var dot = normal.dot(relpos);
+        var dot:Float = normal.dot(relpos);
         if(dot<=0.0){
             var r = makeResult(bi,bj);
             normal.copy( r.ni ); // Contact normal is the plane normal
@@ -710,15 +710,15 @@ class ContactGenerator {
             // rj is now the projected world position minus plane position
             projected.copy(r.rj);
             result.push(r);
-        }*/
+        }
     }
 
-    function particleSphere(result,si,sj,xi,xj,qi,qj,bi,bj){
+    function particleSphere(result:Array<Dynamic>,si:Dynamic,sj:Dynamic,xi:Vec3,xj:Vec3,qi:Quaternion,qj:Quaternion,bi:Body,bj:Body){
         // The normal is the unit vector from sphere center to particle center
-        /*var normal = particleSphere_normal;
+        var normal = particleSphere_normal;
         normal.set(0,0,1);
         xi.vsub(xj,normal);
-        var lengthSquared = normal.norm2();
+        var lengthSquared:Float = normal.norm2();
 
         if(lengthSquared <= sj.radius * sj.radius){
             var r = makeResult(bi,bj);
@@ -729,16 +729,17 @@ class ContactGenerator {
             r.ni.negate(r.ni);
             r.ri.set(0,0,0); // Center of particle
             result.push(r);
-        }*/
+        }
     }
 
     // WIP
-    function particleConvex(result,si,sj,xi,xj,qi,qj,bi,bj){
-        /*var penetratedFaceIndex = -1;
-        var penetratedFaceNormal = particleConvex_penetratedFaceNormal;
-        var worldPenetrationVec = particleConvex_worldPenetrationVec;
-        var minPenetration = null;
-        var numDetectedFaces = 0;
+    function particleConvex(result:Array<Dynamic>,si:Dynamic,sj:Dynamic,xi:Vec3,xj:Vec3,qi:Quaternion,qj:Quaternion,bi:Body,bj:Body){
+        var penetratedFaceIndex:Int = -1;
+        var penetratedFaceNormal:Vec3 = particleConvex_penetratedFaceNormal;
+        var worldPenetrationVec:Vec3 = particleConvex_worldPenetrationVec;
+        var minPenetration:Float = Math.POSITIVE_INFINITY;
+        var minPenetrationSet:Bool = false;
+        var numDetectedFaces:Int = 0;
 
         // Convert particle position xi to local coords in the convex
         var local = particleConvex_local;
@@ -757,7 +758,8 @@ class ContactGenerator {
             }
 
             // For each world polygon in the polyhedra
-            for(var i=0,nfaces=sj.faces.length; i!==nfaces; i++){
+            var nfaces:Int = sj.faces.length;
+            for(i in 0...nfaces){
 
                 // Construct world face vertices
                 var verts = [ sj.worldVertices[ sj.faces[i][0] ] ];
@@ -765,16 +767,17 @@ class ContactGenerator {
 
                 // Check how much the particle penetrates the polygon plane.
                 xi.vsub(verts[0],particleConvex_vertexToParticle);
-                var penetration = -normal.dot(particleConvex_vertexToParticle);
-                if(minPenetration===null || Math.abs(penetration)<Math.abs(minPenetration)){
+                var penetration:Float = -normal.dot(particleConvex_vertexToParticle);
+                if(!minPenetrationSet || Math.abs(penetration)<Math.abs(minPenetration)){
                     minPenetration = penetration;
                     penetratedFaceIndex = i;
+                    minPenetrationSet = true;
                     normal.copy(penetratedFaceNormal);
                     numDetectedFaces++;
                 }
             }
 
-            if(penetratedFaceIndex!==-1){
+            if(penetratedFaceIndex!=-1){
                 // Setup contact
                 var r = makeResult(bi,bj);
                 penetratedFaceNormal.mult(minPenetration, worldPenetrationVec);
@@ -791,9 +794,9 @@ class ContactGenerator {
                 r.ri.set(0,0,0); // Center of particle
                 result.push(r);
             } else {
-                console.warn("Point found inside convex, but did not find penetrating face!");
+                trace("Point found inside convex, but did not find penetrating face!");
             }
-        }*/
+        }
     }
 
     /*
