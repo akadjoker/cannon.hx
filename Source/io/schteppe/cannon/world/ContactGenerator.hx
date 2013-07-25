@@ -4,6 +4,7 @@ import io.schteppe.cannon.constraints.ContactEquation;
 import io.schteppe.cannon.math.Quaternion;
 import io.schteppe.cannon.math.Vec3;
 import io.schteppe.cannon.objects.Body;
+import io.schteppe.cannon.objects.ConvexPolyhedron;
 import io.schteppe.cannon.objects.RigidBody;
 import io.schteppe.cannon.objects.Shape;
 import io.schteppe.cannon.objects.Sphere;
@@ -195,11 +196,11 @@ class ContactGenerator {
     }
 
     // See http://bulletphysics.com/Bullet/BulletFull/SphereTriangleDetector_8cpp_source.html
-    function pointInPolygon(verts, normal, p){
-        /*var positiveResult = null;
+    function pointInPolygon(verts:Array<Vec3>, normal:Vec3, p:Vec3):Bool{
+        var positiveResult:Bool = false;
         var N = verts.length;
-        for(var i=0; i!==N; i++){
-            var v = verts[i];
+        for(i in 0...N){
+            var v:Vec3 = verts[i];
 
             // Get edge to the next vertex
             var edge = pointInPolygon_edge;
@@ -215,11 +216,11 @@ class ContactGenerator {
             p.vsub(v,vertex_to_p);
 
             // This dot product determines which side of the edge the point is
-            var r = edge_x_normal.dot(vertex_to_p);
+            var r:Float = edge_x_normal.dot(vertex_to_p);
 
             // If all such dot products have same sign, we are inside the polygon.
-            if(positiveResult===null || (r>0 && positiveResult===true) || (r<=0 && positiveResult===false)){
-                if(positiveResult===null){
+            if(!positiveResult || (r>0 && positiveResult) || (r<=0 && !positiveResult)){
+                if(!positiveResult){
                     positiveResult = r>0;
                 }
                 continue;
@@ -227,7 +228,7 @@ class ContactGenerator {
                 return false; // Encountered some other sign. Exit.
             }
         }
-*/
+
         // If we got here, all dot products were of the same sign.
         return true;
     }
@@ -351,7 +352,7 @@ class ContactGenerator {
                 }
             }
         }
-        v3pool.release([rj]);
+        v3pool.release(rj);
         rj = null;
 
         // Check edges
@@ -411,21 +412,21 @@ class ContactGenerator {
                 }
             }
         }
-        v3pool.release([edgeTangent,edgeCenter,r,orthogonal,dist]);
+        v3pool.releaseGroup([edgeTangent,edgeCenter,r,orthogonal,dist]);
     }
 
-    function sphereConvex(result:Array<Dynamic>,si:Dynamic,sj:Dynamic,xi:Vec3,xj:Vec3,qi:Quaternion,qj:Quaternion,bi:Body,bj:Body){
-        /*xi.vsub(xj,convex_to_sphere);
-        var normals = sj.faceNormals;
-        var faces = sj.faces;
-        var verts = sj.vertices;
-        var R =     si.radius;
-        var penetrating_sides = [];
+    function sphereConvex(result:Array<Dynamic>,si:Dynamic,sj:ConvexPolyhedron,xi:Vec3,xj:Vec3,qi:Quaternion,qj:Quaternion,bi:Body,bj:Body){
+        xi.vsub(xj,convex_to_sphere);
+        var normals:Array<Vec3> = sj.faceNormals;
+        var faces:Array<Dynamic> = sj.faces;
+        var verts:Array<Vec3> = sj.vertices;
+        var R:Float =     si.radius;
+        var penetrating_sides:Array<Dynamic> = [];
+        var found:Bool = false;
 
         // Check corners
-        for(var i=0; i!==verts.length; i++){
-            var v = verts[i];
-
+        for(i in 0...verts.length){
+            var v:Vec3 = verts[i];
             // World position of corner
             var worldCorner = sphereConvex_worldCorner;
             qj.vmult(v,worldCorner);
@@ -446,8 +447,10 @@ class ContactGenerator {
         }
 
         // Check side (plane) intersections
-        var found = false;
-        for(var i=0,nfaces=faces.length; i!==nfaces && found===false; i++){
+
+        var nfaces:Int = faces.length;
+        for (i in 0...nfaces) {
+            if (found) break; 
             var normal = normals[i];
             var face = faces[i];
 
@@ -471,8 +474,9 @@ class ContactGenerator {
 
             if(penetration<0 && sphereToWorldPoint.dot(worldNormal)>0){
                 // Intersects plane. Now check if the sphere is inside the face polygon
-                var faceVerts = []; // Face vertices, in world coords
-                for(var j=0, Nverts=face.length; j!==Nverts; j++){
+                var faceVerts = []; // Face vertices, in world coords 
+                var Nverts:Int = face.length;
+                for(j in 0...Nverts){
                     var worldVertex = v3pool.get();
                     qj.vmult(verts[face[j]], worldVertex);
                     xj.vadd(worldVertex,worldVertex);
@@ -501,14 +505,15 @@ class ContactGenerator {
                     result.push(r);
 
                     // Release world vertices
-                    for(var j=0, Nfaceverts=faceVerts.length; j!==Nfaceverts; j++){
+                    var Nfaceverts:Int = faceVerts.length;
+                    for(j in 0...Nfaceverts){
                         v3pool.release(faceVerts[j]);
                     }
 
                     return; // We only expect *one* face contact
                 } else {
                     // Edge?
-                    for(var j=0; j!==face.length; j++){
+                    for(j in 0...face.length){
 
                         // Get two world transformed vertices
                         var v1 = v3pool.get();
@@ -530,7 +535,7 @@ class ContactGenerator {
                         var p = v3pool.get();
                         var v1_to_xi = v3pool.get();
                         xi.vsub(v1, v1_to_xi);
-                        var dot = v1_to_xi.dot(edgeUnit);
+                        var dot:Float = v1_to_xi.dot(edgeUnit);
                         edgeUnit.mult(dot, p);
                         p.vadd(v1, p);
 
@@ -552,7 +557,8 @@ class ContactGenerator {
                             result.push(r);
 
                             // Release world vertices
-                            for(var j=0, Nfaceverts=faceVerts.length; j!==Nfaceverts; j++){
+                            var Nfaceverts:Int = faceVerts.length;
+                            for(j in 0...Nfaceverts){
                                 v3pool.release(faceVerts[j]);
                             }
 
@@ -574,11 +580,12 @@ class ContactGenerator {
                 }
 
                 // Release world vertices
-                for(var j=0, Nfaceverts=faceVerts.length; j!==Nfaceverts; j++){
+                var Nfaceverts:Int = faceVerts.length;
+                for(j in 0...Nfaceverts){
                     v3pool.release(faceVerts[j]);
                 }
             }
-        }*/
+        }
     }
 
     function planeBox(result:Array<Dynamic>,si:Dynamic,sj:Dynamic,xi:Vec3,xj:Vec3,qi:Quaternion,qj:Quaternion,bi:Body,bj:Body){
@@ -591,13 +598,16 @@ class ContactGenerator {
      * @param CompoundShape sj
      */
     function recurseCompound(result:Array<Dynamic>,si:Dynamic,sj:Dynamic,xi:Vec3,xj:Vec3,qi:Quaternion,qj:Quaternion,bi:Body,bj:Body){
-        /*var v3pool = recurseCompound_v3pool;
-        var quatPool = recurseCompound_quatpool;
+        var v3pool:Array<Vec3> = recurseCompound_v3pool;
+        var quatPool:Array<Quaternion> = recurseCompound_quatpool;
         var nr = 0;
-        for(var i=0, Nchildren=sj.childShapes.length; i!==Nchildren; i++){
-            var r = [];
-            var newQuat = quatPool.pop() || new Quaternion();
-            var newPos = v3pool.pop() || new Vec3();
+        var Nchildren:Int = sj.childShapes.length;
+        for(i in 0...Nchildren){
+            var r:Array<Dynamic> = [];
+            var newQuat:Quaternion = quatPool.pop();
+            if (newQuat == null) newQuat = new Quaternion();
+            var newPos:Vec3 = v3pool.pop();
+            if (newPos == null) newPos = new Vec3();
             qj.mult(sj.childOrientations[i],newQuat); // Can't reuse these since nearPhase() may recurse
             newQuat.normalize();
             //var newPos = xj.vadd(qj.vmult(sj.childOffsets[i]));
@@ -617,10 +627,10 @@ class ContactGenerator {
 
             var tempVec = newPos;
 
-            if(!si){
+            if(si == null){
                 nr+= r.length;
             }
-            for(var j=0; j!==r.length; j++){
+            for(j in 0...r.length){
                 // The "rj" vector is in world coords, though we must add the world child offset vector.
                 //r[j].rj.vadd(qj.vmult(sj.childOffsets[i]),r[j].rj);
                 qj.vmult(sj.childOffsets[i],tempVec);
@@ -629,7 +639,7 @@ class ContactGenerator {
             }
 
             v3pool.push(newPos);
-        }*/
+        }
     }
 
     function planeConvex(result:Array<Dynamic>,si:Dynamic,sj:Dynamic,xi:Vec3,xj:Vec3,qi:Quaternion,qj:Quaternion,bi:Body,bj:Body){
@@ -881,8 +891,7 @@ class ContactGenerator {
                 case 4: //Shape.types.BOX: // sphere-box
                     sphereBox(result,si,sj,xi,xj,qi,qj,bi,bj);
                 case 8: //Shape.types.COMPOUND: // sphere-compound
-                    throw "Not Implemented";
-                    //recurseCompound(result,si,sj,xi,xj,qi,qj,bi,bj);
+                    recurseCompound(result,si,sj,xi,xj,qi,qj,bi,bj);
                 case 16: //Shape.types.CONVEXPOLYHEDRON: // sphere-convexpolyhedron
                     throw "Not Implemented";
                     //sphereConvex(result,si,sj,xi,xj,qi,qj,bi,bj);
@@ -898,11 +907,9 @@ class ContactGenerator {
                 case 4: //types.BOX: // plane-box
                     planeBox(result,si,sj,xi,xj,qi,qj,bi,bj);
                 case 8: //types.COMPOUND: // plane-compound
-                    throw "Not Implemented";
-                    //recurseCompound(result,si,sj,xi,xj,qi,qj,bi,bj);
+                    recurseCompound(result,si,sj,xi,xj,qi,qj,bi,bj);
                 case 16: //types.CONVEXPOLYHEDRON: // plane-convex polyhedron
-                    throw "Not Implemented";
-                    //planeConvex(result,si,sj,xi,xj,qi,qj,bi,bj);
+                    planeConvex(result,si,sj,xi,xj,qi,qj,bi,bj);
                 default:
                     trace("Collision between CANNON.Shape.types.PLANE and "+sj.type+" not implemented yet.");
                 }
@@ -912,15 +919,12 @@ class ContactGenerator {
                 switch(sj.type){
                 case 4: //types.BOX: // box-box
                     // Do convex/convex instead
-                    throw "Not Implemented";
-                    //nearPhase(result,si.convexPolyhedronRepresentation,sj.convexPolyhedronRepresentation,xi,xj,qi,qj,bi,bj);
+                    nearPhase(result,si.convexPolyhedronRepresentation,sj.convexPolyhedronRepresentation,xi,xj,qi,qj,bi,bj);
                 case 8: //types.COMPOUND: // box-compound
-                    throw "Not Implemented";
-                    //recurseCompound(result,si,sj,xi,xj,qi,qj,bi,bj);
+                    recurseCompound(result,si,sj,xi,xj,qi,qj,bi,bj);
                 case 16: //types.CONVEXPOLYHEDRON: // box-convexpolyhedron
                     // Do convex/convex instead
-                    throw "Not Implemented";
-                    //nearPhase(result,si.convexPolyhedronRepresentation,sj,xi,xj,qi,qj,bi,bj);
+                    nearPhase(result,si.convexPolyhedronRepresentation,sj,xi,xj,qi,qj,bi,bj);
                 default:
                     trace("Collision between CANNON.Shape.types.BOX and "+sj.type+" not implemented yet.");
                 }
@@ -929,17 +933,15 @@ class ContactGenerator {
 
                 switch(sj.type){
                 case 8: //types.COMPOUND: // compound-compound
-                    throw "Not Implemented";
-                    //recurseCompound(result,si,sj,xi,xj,qi,qj,bi,bj);
+                    recurseCompound(result,si,sj,xi,xj,qi,qj,bi,bj);
                 case 16: //types.CONVEXPOLYHEDRON: // compound-convex polyhedron
-                    throw "Not Implemented";
                     // Must swap
-                    /*var r = [];
+                    var r = [];
                     recurseCompound(r,sj,si,xj,xi,qj,qi,bj,bi);
                     for(ri in 0...r.length){
                         swapResult(r[ri]);
                         result.push(r[ri]);
-                    }*/
+                    }
                 default:
                     trace("Collision between CANNON.Shape.types.COMPOUND and "+sj.type+" not implemented yet.");
                 }
@@ -948,8 +950,7 @@ class ContactGenerator {
 
                 switch(sj.type){
                 case 16: //types.CONVEXPOLYHEDRON: // convex polyhedron - convex polyhedron
-                    throw "Not Implemented";
-                    //convexConvex(result,si,sj,xi,xj,qi,qj,bi,bj);
+                    convexConvex(result,si,sj,xi,xj,qi,qj,bi,bj);
                 default:
                     trace("Collision between CANNON.Shape.types.CONVEXPOLYHEDRON and "+sj.type+" not implemented yet.");
                 }

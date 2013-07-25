@@ -19,11 +19,11 @@ import io.schteppe.cannon.objects.Shape;
  */
 class ConvexPolyhedron extends Shape {
 
-    public var vertices:Array<Dynamic>;
-    public var worldVertices:Array<Dynamic>;
+    public var vertices:Array<Vec3>;
+    public var worldVertices:Array<Vec3>;
     public var faces:Array<Dynamic>;
-    public var faceNormals:Array<Dynamic>;
-    public var worldFaceNormals:Array<Dynamic>;
+    public var faceNormals:Array<Vec3>;
+    public var worldFaceNormals:Array<Vec3>;
 
     var cb:Vec3;
     var ab:Vec3;
@@ -670,7 +670,7 @@ class ConvexPolyhedron extends Shape {
         return ( Math.random() - 0.5 ) * 2 * 1e-6;
     }
 
-    public function calculateLocalInertia(mass,target){
+    public override function calculateLocalInertia(mass:Float,target:Vec3 = null):Vec3{
         // Approximate with box inertia
         // Exact inertia calculation is overkill, but see http://geometrictools.com/Documentation/PolyhedralMassProperties.pdf for the correct way to do it
         /*that.computeAABB();
@@ -680,6 +680,7 @@ class ConvexPolyhedron extends Shape {
         target.x = 1.0 / 12.0 * mass * ( 2*y*2*y + 2*z*2*z );
         target.y = 1.0 / 12.0 * mass * ( 2*x*2*x + 2*z*2*z );
         target.z = 1.0 / 12.0 * mass * ( 2*y*2*y + 2*x*2*x );*/
+        return target;
     }
 
     public function computeAABB(){
@@ -742,7 +743,7 @@ class ConvexPolyhedron extends Shape {
         this.worldFaceNormalsNeedsUpdate = false;*/
     }
 
-    public function computeBoundingSphereRadius(){
+    public override function computeBoundingSphereRadius(){
         // Assume points are distributed with local (0,0,0) as center
         /*var max2 = 0;
         var verts = this.vertices;
@@ -757,7 +758,7 @@ class ConvexPolyhedron extends Shape {
         this.boundingSphereRadiusNeedsUpdate = false;*/
     }
 
-    public function calculateWorldAABB(pos,quat,min,max){
+    public override function calculateWorldAABB(pos:Vec3, quat:Quaternion, min:Vec3, max:Vec3) {
         /*var n = this.vertices.length, verts = this.vertices;
         var minx,miny,minz,maxx,maxy,maxz;
         for(i in 0...n){
@@ -788,11 +789,11 @@ class ConvexPolyhedron extends Shape {
     }
 
     // Just approximate volume!
-    public function volume(){
-        /*if(this.boundingSphereRadiusNeedsUpdate){
+    public override function volume():Float{
+        if(this.boundingSphereRadiusNeedsUpdate){
             this.computeBoundingSphereRadius();
         }
-        return 4.0 * Math.PI * this.boundingSphereRadius / 3.0;*/
+        return 4.0 * Math.PI * this.boundingSphereRadius / 3.0;
     }
 
     // Get an average of all the vertices

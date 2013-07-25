@@ -14,10 +14,14 @@ class Pool {
         this.type = null;
     }
 
-    public function release(group:Array<Dynamic>) {
+    public function releaseGroup(group:Array<Dynamic>) {
         for(obj in group){
             this.objects.push(obj);
         }
+    }
+
+    public function release(obj:Dynamic) {
+        this.objects.push(obj);
     }
 
     public function get():Dynamic{
