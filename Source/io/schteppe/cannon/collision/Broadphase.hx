@@ -141,7 +141,7 @@ class Broadphase {
 
         var bishape = bi.shape, bjshape = bj.shape;
         if(bishape != null && bjshape != null){
-            var ti = bishape.type, tj = bjshape.type;
+            var ti = bishape.type; var tj = bjshape.type;
 
             // --- Box / sphere / compound / convexpolyhedron collision ---
             if(((ti & BOX_SPHERE_COMPOUND_CONVEX) != 0) && ((tj & BOX_SPHERE_COMPOUND_CONVEX) != 0)){
@@ -156,7 +156,7 @@ class Broadphase {
                     bjshape.computeBoundingSphereRadius();
                 }
 
-                var boundingRadiusSum = bishape.boundingSphereRadius + bjshape.boundingSphereRadius;
+                var boundingRadiusSum:Float = bishape.boundingSphereRadius + bjshape.boundingSphereRadius;
                 if(r.norm2() < boundingRadiusSum*boundingRadiusSum){
                     pairs1.push(bi);
                     pairs2.push(bj);
@@ -183,7 +183,7 @@ class Broadphase {
                     otherShape.computeBoundingSphereRadius();
                 }
 
-                var q = r.dot(normal) - otherShape.boundingSphereRadius;
+                var q:Float = r.dot(normal) - otherShape.boundingSphereRadius;
                 if(q < 0.0){
                     pairs1.push(bi);
                     pairs2.push(bj);
@@ -212,7 +212,7 @@ class Broadphase {
                         if(otherShape.boundingSphereRadiusNeedsUpdate){
                             otherShape.computeBoundingSphereRadius();
                         }
-                        var R = otherShape.boundingSphereRadius;
+                        var R:Float = otherShape.boundingSphereRadius;
                         particle.position.vsub(other.position,relpos);
                         if(R*R >= relpos.norm2()){
                             pairs1.push(particle);

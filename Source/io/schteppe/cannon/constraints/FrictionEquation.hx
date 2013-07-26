@@ -66,37 +66,35 @@ class FrictionEquation extends Equation {
     }
 
     public override function computeB(h:Float):Float{
-        var a = this.a;
-        var b = this.b;
-        var bi = this.bi;
-        var bj = this.bj;
-        var ri = this.ri;
-        var rj = this.rj;
-        var rixt = this.rixt;
-        var rjxt = this.rjxt;
-        var wixri = this.wixri;
-        var wjxrj = this.wjxrj;
-        var zero = FrictionEquation_computeB_zero;
+        var bi:Body = this.bi;
+        var bj:Body = this.bj;
+        var ri:Vec3 = this.ri;
+        var rj:Vec3 = this.rj;
+        var rixt:Vec3 = this.rixt;
+        var rjxt:Vec3 = this.rjxt;
+        var wixri:Vec3 = this.wixri;
+        var wjxrj:Vec3 = this.wjxrj;
+        var zero:Vec3 = FrictionEquation_computeB_zero;
 
-        var vi = bi.velocity;
-        var wi = (bi.angularVelocity!=null) ? bi.angularVelocity : zero;
-        var fi = bi.force;
-        var taui = (bi.tau!=null) ? bi.tau : zero;
+        var vi:Vec3 = bi.velocity;
+        var wi:Vec3 = (bi.angularVelocity!=null) ? bi.angularVelocity : zero;
+        var fi:Vec3 = bi.force;
+        var taui:Vec3 = (bi.tau!=null) ? bi.tau : zero;
 
-        var vj = bj.velocity;
-        var wj = (bj.angularVelocity!=null) ? bj.angularVelocity : zero;
-        var fj = bj.force;
-        var tauj = (bj.tau!=null) ? bj.tau : zero;
+        var vj:Vec3 = bj.velocity;
+        var wj:Vec3 = (bj.angularVelocity!=null) ? bj.angularVelocity : zero;
+        var fj:Vec3 = bj.force;
+        var tauj:Vec3 = (bj.tau!=null) ? bj.tau : zero;
 
-        var relVel = this.relVel;
-        var relForce = this.relForce;
-        var invMassi = bi.invMass;
-        var invMassj = bj.invMass;
+        var relVel:Vec3 = this.relVel;
+        var relForce:Vec3 = this.relForce;
+        var invMassi:Float = bi.invMass;
+        var invMassj:Float = bj.invMass;
 
-        var invIi = this.invIi;
-        var invIj = this.invIj;
+        var invIi:Mat3 = this.invIi;
+        var invIj:Mat3 = this.invIj;
 
-        var t = this.t;
+        var t:Vec3 = this.t;
 
         var invIi_vmult_taui = FrictionEquation_computeB_temp1;
         var invIj_vmult_tauj = FrictionEquation_computeB_temp2;
@@ -119,11 +117,11 @@ class FrictionEquation extends Equation {
         invIi.vmult(taui,invIi_vmult_taui);
         invIj.vmult(tauj,invIj_vmult_tauj);
 
-        var Gq = 0; // we do only want to constrain motion
-        var GW = vj.dot(t) - vi.dot(t) + wjxrj.dot(t) - wixri.dot(t); // eq. 40
-        var GiMf = fj.dot(t)*invMassj - fi.dot(t)*invMassi + rjxt.dot(invIj_vmult_tauj) - rixt.dot(invIi_vmult_taui);
+        var Gq:Float = 0; // we do only want to constrain motion
+        var GW:Float = vj.dot(t) - vi.dot(t) + wjxrj.dot(t) - wixri.dot(t); // eq. 40
+        var GiMf:Float = fj.dot(t)*invMassj - fi.dot(t)*invMassi + rjxt.dot(invIj_vmult_tauj) - rixt.dot(invIi_vmult_taui);
 
-        var B = - Gq * a - GW * b - h*GiMf;
+        var B:Float = - Gq * a - GW * b - h*GiMf;
 
         return B;
     }
@@ -132,15 +130,15 @@ class FrictionEquation extends Equation {
     //var FEcomputeC_temp1 = new Vec3();
     //var FEcomputeC_temp2 = new Vec3();
     public override function computeC():Float{
-        var bi = this.bi;
-        var bj = this.bj;
-        var rixt = this.rixt;
-        var rjxt = this.rjxt;
-        var invMassi = bi.invMass;
-        var invMassj = bj.invMass;
-        var C = invMassi + invMassj + this.eps;
-        var invIi = this.invIi;
-        var invIj = this.invIj;
+        var bi:Body = this.bi;
+        var bj:Body = this.bj;
+        var rixt:Vec3 = this.rixt;
+        var rjxt:Vec3 = this.rjxt;
+        var invMassi:Float = bi.invMass;
+        var invMassj:Float = bj.invMass;
+        var C:Float = invMassi + invMassj + this.eps;
+        var invIi:Mat3 = this.invIi;
+        var invIj:Mat3 = this.invIj;
 
         ////if(bi.invInertia){
         ////    invIi.setTrace(bi.invInertia);
@@ -167,10 +165,10 @@ class FrictionEquation extends Equation {
 
         // Correct at all ???
 
-        var bi = this.bi;
-        var bj = this.bj;
+        var bi:Body = this.bi;
+        var bj:Body = this.bj;
 
-        var GWlambda = 0.0;
+        var GWlambda:Float = 0.0;
         var ulambda = FrictionEquation_computeGWlambda_ulambda;
         bj.vlambda.vsub(bi.vlambda,ulambda);
         GWlambda += ulambda.dot(this.t);
@@ -187,16 +185,16 @@ class FrictionEquation extends Equation {
     }
 
     public override function addToWlambda(deltalambda:Float):Void{
-        var bi = this.bi;
-        var bj = this.bj;
-        var rixt = this.rixt;
-        var rjxt = this.rjxt;
-        var invMassi = bi.invMass;
-        var invMassj = bj.invMass;
-        var t = this.t;
-        var tmp = FrictionEquation_addToWlambda_tmp;
-        var wi = bi.wlambda;
-        var wj = bj.wlambda;
+        var bi:Body = this.bi;
+        var bj:Body = this.bj;
+        var rixt:Vec3 = this.rixt;
+        var rjxt:Vec3 = this.rjxt;
+        var invMassi:Float = bi.invMass;
+        var invMassj:Float = bj.invMass;
+        var t:Vec3 = this.t;
+        var tmp:Vec3 = FrictionEquation_addToWlambda_tmp;
+        var wi:Vec3 = bi.wlambda;
+        var wj:Vec3 = bj.wlambda;
 
         // Add to linear velocity
         t.mult(invMassi * deltalambda, tmp);

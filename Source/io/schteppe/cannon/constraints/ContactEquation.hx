@@ -131,21 +131,21 @@ class ContactEquation extends Equation {
             invIj.identity(); // ok?
         }
 
-        var n = this.ni;
+        var n:Vec3 = this.ni;
 
         // Caluclate cross products
         ri.cross(n,rixn);
         rj.cross(n,rjxn);
 
         // Calculate q = xj+rj -(xi+ri) i.e. the penetration vector
-        var penetrationVec = this.penetrationVec;
+        var penetrationVec:Vec3 = this.penetrationVec;
         penetrationVec.set(0,0,0);
         penetrationVec.vadd(bj.position,penetrationVec);
         penetrationVec.vadd(rj,penetrationVec);
         penetrationVec.vsub(bi.position,penetrationVec);
         penetrationVec.vsub(ri,penetrationVec);
 
-        var Gq = n.dot(penetrationVec);//-Math.abs(this.penetration);
+        var Gq:Float = n.dot(penetrationVec);//-Math.abs(this.penetration);
 
         var invIi_vmult_taui = ContactEquation_computeB_temp1;
         var invIj_vmult_tauj = ContactEquation_computeB_temp2;
@@ -153,27 +153,27 @@ class ContactEquation extends Equation {
         invIj.vmult(tauj,invIj_vmult_tauj);
 
         // Compute iteration
-        var ePlusOne = this.restitution + 1;
-        var GW = ePlusOne * vj.dot(n) - ePlusOne * vi.dot(n) + wj.dot(rjxn) - wi.dot(rixn);
-        var GiMf = fj.dot(n)*invMassj - fi.dot(n)*invMassi + rjxn.dot(invIj_vmult_tauj) - rixn.dot(invIi_vmult_taui);
-        var B = - Gq * a - GW * b - h*GiMf;
+        var ePlusOne:Float = this.restitution + 1;
+        var GW:Float = ePlusOne * vj.dot(n) - ePlusOne * vi.dot(n) + wj.dot(rjxn) - wi.dot(rixn);
+        var GiMf:Float = fj.dot(n)*invMassj - fi.dot(n)*invMassi + rjxn.dot(invIj_vmult_tauj) - rixn.dot(invIi_vmult_taui);
+        var B:Float = - Gq * a - GW * b - h*GiMf;
 
         return B;
     }
 
     // Compute C = GMG+eps in the SPOOK equation
     public override function computeC():Float{
-        var bi = this.bi;
-        var bj = this.bj;
-        var rixn = this.rixn;
-        var rjxn = this.rjxn;
-        var invMassi = bi.invMass;
-        var invMassj = bj.invMass;
+        var bi:Body = this.bi;
+        var bj:Body = this.bj;
+        var rixn:Vec3 = this.rixn;
+        var rjxn:Vec3 = this.rjxn;
+        var invMassi:Float = bi.invMass;
+        var invMassj:Float = bj.invMass;
 
-        var C = invMassi + invMassj + this.eps;
+        var C:Float = invMassi + invMassj + this.eps;
 
-        var invIi = this.invIi;
-        var invIj = this.invIj;
+        var invIi:Mat3 = this.invIi;
+        var invIj:Mat3 = this.invIj;
 
 
         ////if(bi.invInertia){
@@ -206,11 +206,11 @@ class ContactEquation extends Equation {
     }
 
     public override function computeGWlambda():Float{
-        var bi = this.bi;
-        var bj = this.bj;
-        var ulambda = computeGWlambda_ulambda;
+        var bi:Body = this.bi;
+        var bj:Body = this.bj;
+        var ulambda:Vec3 = computeGWlambda_ulambda;
 
-        var GWlambda = 0.0;
+        var GWlambda:Float = 0.0;
 
         bj.vlambda.vsub(bi.vlambda, ulambda);
         GWlambda += ulambda.dot(this.ni);
@@ -227,15 +227,15 @@ class ContactEquation extends Equation {
     }
 
     public override function addToWlambda(deltalambda:Float):Void{
-        var bi = this.bi;
-        var bj = this.bj;
-        var rixn = this.rixn;
-        var rjxn = this.rjxn;
-        var invMassi = bi.invMass;
-        var invMassj = bj.invMass;
-        var n = this.ni;
-        var temp1 = ContactEquation_addToWlambda_temp1;
-        var temp2 = ContactEquation_addToWlambda_temp2;
+        var bi:Body = this.bi;
+        var bj:Body = this.bj;
+        var rixn:Vec3 = this.rixn;
+        var rjxn:Vec3 = this.rjxn;
+        var invMassi:Float = bi.invMass;
+        var invMassj:Float = bj.invMass;
+        var n:Vec3 = this.ni;
+        var temp1:Vec3 = ContactEquation_addToWlambda_temp1;
+        var temp2:Vec3 = ContactEquation_addToWlambda_temp2;
 
 
         // Add to linear velocity
