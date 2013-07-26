@@ -20,7 +20,7 @@ class Shape {
     public var boundingSphereRadiusNeedsUpdate:Bool;
 
     //FIXME: Change this back to ConvexPolyhedron
-    public var convexPolyhedronRepresentation:Dynamic;//ConvexPolyhedron;
+    public var convexPolyhedronRepresentation:ConvexPolyhedron;
 
     var Shape_calculateTransformedInertia_localInertia:Vec3;
     var Shape_calculateTransformedInertia_worldInertia:Vec3;
@@ -57,7 +57,7 @@ class Shape {
      * @return float
      */
     public function computeBoundingSphereRadius(){
-        throw "computeBoundingSphereRadius() not implemented for shape type "+this.type;
+        throw "computeBoundingSphereRadius() not implemented for shape type " + this.type;
     }
 
     /**

@@ -3,11 +3,14 @@ package;
 import flash.display.Sprite;
 import flash.events.Event;
 
+import io.schteppe.cannon.world.World;
 import io.schteppe.cannon.collision.NaiveBroadphase;
 import io.schteppe.cannon.objects.Plane;
 import io.schteppe.cannon.objects.RigidBody;
 import io.schteppe.cannon.objects.Sphere;
-import io.schteppe.cannon.world.World;
+import io.schteppe.cannon.objects.Box;
+import io.schteppe.cannon.objects.Compound;
+import io.schteppe.cannon.objects.Cylinder;
 
 class Main extends Sprite {
 
