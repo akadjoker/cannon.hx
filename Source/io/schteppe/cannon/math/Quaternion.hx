@@ -288,15 +288,15 @@ class Quaternion {
      * @param Vec3 target
      * @param string order Three-character string e.g. "YZX", which also is default.
      */
-    public function toEuler(target,order:String = null):Void{
+    public function toEuler(target:Vec3, order:String = null):Void{
         if (order == null) order = "YZX";
 
-        var heading:Float = 0.0; var attitude:Float = 0.0; var bank:Float = 0.0;
+        var heading:Float = Math.NaN; var attitude:Float = 0.0; var bank:Float = 0.0;
         var x:Float = this.x; var y:Float = this.y; var z:Float = this.z; var w:Float = this.w;
 
         switch(order){
         case "YZX":
-            var test:Float = x*y + z*w;
+            var test:Float = x * y + z * w;
             if (test > 0.499) { // singularity at north pole
                 heading = 2 * Math.atan2(x,w);
                 attitude = Math.PI/2;
@@ -311,9 +311,9 @@ class Quaternion {
                 var sqx:Float = x*x;
                 var sqy:Float = y*y;
                 var sqz:Float = z*z;
-                heading = Math.atan2(2*y*w - 2*x*z , 1 - 2*sqy - 2*sqz); // Heading
+                heading = Math.atan2(2*y*w - 2*x*z , 1.0 - 2*sqy - 2*sqz); // Heading
                 attitude = Math.asin(2*test); // attitude
-                bank = Math.atan2(2*x*w - 2*y*z , 1 - 2*sqx - 2*sqz); // bank
+                bank = Math.atan2(2*x*w - 2*y*z , 1.0 - 2*sqx - 2*sqz); // bank
             }
         default:
             throw "Euler order "+order+" not supported yet.";
