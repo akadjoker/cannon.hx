@@ -335,7 +335,7 @@ class Vec3 {
      * @return bool
      */
     public function almostEquals(v:Vec3,precision:Float = -1.0):Bool{
-        if(precision < -1.0){
+        if(precision < -0.99){
             precision = 1e-6;
         }
         if( Math.abs(this.x-v.x)>precision ||

@@ -390,8 +390,8 @@ class ContactGenerator {
                     dist.vsub(xj,dist);
 
                     // Distances in tangent direction and distance in the plane orthogonal to it
-                    var tdist = Math.abs(orthonorm);
-                    var ndist = dist.norm();
+                    var tdist:Float = Math.abs(orthonorm);
+                    var ndist:Float = dist.norm();
 
                     if(tdist < sides[l].norm() && ndist<R){
                         found = true;
@@ -467,7 +467,7 @@ class ContactGenerator {
 
             var penetrationVec = sphereConvex_penetrationVec;
             worldSpherePointClosestToPlane.vsub(worldPoint,penetrationVec);
-            var penetration = penetrationVec.dot(worldNormal);
+            var penetration:Float = penetrationVec.dot(worldNormal);
 
             var sphereToWorldPoint = sphereConvex_sphereToWorldPoint;
             xi.vsub(worldPoint,sphereToWorldPoint);

@@ -232,7 +232,7 @@ class ConvexPolyhedron extends Shape {
 
         if(min>max){
             // Inconsistent - swap
-            var temp = min;
+            var temp:Float = min;
             min = max;
             max = temp;
         }
@@ -499,17 +499,17 @@ class ConvexPolyhedron extends Shape {
             a.copy(worldA1);
             quatA.vmult(worldA1,worldA1);
             posA.vadd(worldA1,worldA1);
-            var planeEqWS1 = -worldA1.dot(planeNormalWS1);
+            var planeEqWS1:Float = -worldA1.dot(planeNormalWS1);
             var planeEqWS:Float = 0.0;
             if(true){
                 var otherFace = polyAconnectedFaces[e0];
                 this.faceNormals[otherFace].copy(localPlaneNormal);
-                var localPlaneEq = planeConstant(otherFace);
+                var localPlaneEq:Float = planeConstant(otherFace);
 
                 localPlaneNormal.copy(planeNormalWS);
                 quatA.vmult(planeNormalWS,planeNormalWS);
                 //posA.vadd(planeNormalWS,planeNormalWS);
-                var planeEqWS = localPlaneEq - planeNormalWS.dot(posA);
+                planeEqWS = localPlaneEq - planeNormalWS.dot(posA);
             } else  {
                 planeNormalWS1.copy(planeNormalWS);
                 planeEqWS = planeEqWS1;
@@ -586,7 +586,7 @@ class ConvexPolyhedron extends Shape {
         //    throw new Error("outvertices must be Array, "+outVertices+" given");
         //}
         var n_dot_first:Float; var n_dot_last:Float;
-        var numVerts = inVertices.length;
+        var numVerts:Int = inVertices.length;
 
         if(numVerts < 2){
             return outVertices;
@@ -753,7 +753,7 @@ class ConvexPolyhedron extends Shape {
         var verts = this.vertices;
         var N = verts.length;
         for(i in 0...N) {
-            var norm2 = verts[i].norm2();
+            var norm2:Float = verts[i].norm2();
             if(norm2 > max2){
                 max2 = norm2;
             }

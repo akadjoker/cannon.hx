@@ -30,10 +30,10 @@ class ContactMaterial {
         this.materials = [m1,m2];
 
         /// Kinetic friction
-        this.friction = friction < 0.0 ? friction : 0.3;
+        this.friction = friction > -0.1 ? friction : 0.3;
 
         /// Restitution
-        this.restitution = restitution < 0.0 ? restitution : 0.3;
+        this.restitution = restitution > -0.1 ? restitution : 0.3;
 
         // Parameters to pass to the constraint when it is created
         this.contactEquationStiffness = 1e7;

@@ -34,7 +34,7 @@ class GSSolver extends Solver {
          * When tolerance is reached, the system is assumed to be converged.
          * @property float tolerance
          */
-        this.tolerance = 0.0;
+        this.tolerance = 0.1;
 
         GSSolver_solve_lambda = [];
         GSSolver_solve_invCs = [];
@@ -45,6 +45,7 @@ class GSSolver extends Solver {
         //var d = this.d;
         //var ks = this.k;
         var iter:Int = 0;
+        var iterCount:Int = 0;
         var maxIter:Int = this.iterations;
         var tolSquared:Float = this.tolerance * this.tolerance;
         //var a = this.a;
@@ -128,6 +129,7 @@ class GSSolver extends Solver {
                 if(deltalambdaTot*deltalambdaTot < tolSquared){
                     break;
                 }
+                iterCount++;
             }
 
             // Add result to velocity
@@ -142,6 +144,6 @@ class GSSolver extends Solver {
             }
         }
 
-        return iter;
+        return iterCount;
     }
 }

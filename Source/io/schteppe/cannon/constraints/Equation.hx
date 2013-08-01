@@ -34,13 +34,13 @@ class Equation {
          * @property float minForce
          * @memberof CANNON.Equation
          */
-        this.minForce = minForce < 0 ? -1e6 : minForce;
+        this.minForce = minForce == -1.0 ? -1e6 : minForce;
 
         /**
          * @property float maxForce
          * @memberof CANNON.Equation
          */
-        this.maxForce = maxForce < 0 ? 1e6 : maxForce;
+        this.maxForce = maxForce == -1.0 ? 1e6 : maxForce;
 
         /**
          * @property CANNON.Body bi
