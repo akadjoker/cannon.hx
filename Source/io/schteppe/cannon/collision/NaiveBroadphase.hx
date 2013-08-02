@@ -1,4 +1,5 @@
 package io.schteppe.cannon.collision;
+import io.schteppe.cannon.objects.Body;
 import io.schteppe.cannon.world.World;
 
 /**
@@ -21,10 +22,10 @@ class NaiveBroadphase extends Broadphase {
      * @param Array pairs1
      * @param Array pairs2
      */
-    public override function collisionPairs(world:World,pairs1:Array<Dynamic>,pairs2:Array<Dynamic>){
-        var bodies = world.bodies;
-        var n = bodies.length;
-        var i, j, bi, bj;
+    public override function collisionPairs(world:World,pairs1:Array<Body>,pairs2:Array<Body>){
+        var bodies:Array<Body> = world.bodies;
+        var n:Int = bodies.length;
+        var i:Int; var j:Int; var bi:Body; var bj:Body;
 
         // Naive N^2 ftw!
         for(i in 0...n){

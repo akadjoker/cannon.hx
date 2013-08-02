@@ -234,7 +234,7 @@ class World extends EventTarget {
     // @memberof CANNON.World
     // @brief Get number of objects in the world.
     // @return int
-    function numObjects(){
+    public function numObjects(){
         return this.bodies.length;
     }
 

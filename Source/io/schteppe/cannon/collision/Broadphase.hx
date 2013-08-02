@@ -24,8 +24,8 @@ class Broadphase {
     var Broadphase_collisionPairs_quat:Quaternion;
     var Broadphase_collisionPairs_relpos:Vec3;
     var Broadphase_makePairsUnique_temp:Map<String, Int>;
-    var Broadphase_makePairsUnique_p1:Array<Dynamic>;
-    var Broadphase_makePairsUnique_p2:Array<Dynamic>;
+    var Broadphase_makePairsUnique_p1:Array<Body>;
+    var Broadphase_makePairsUnique_p2:Array<Body>;
 
     public function new(){
         /**
@@ -108,7 +108,7 @@ class Broadphase {
      * @param CANNON.Body bodyB
      * @return bool
      */
-    public function intersectionTest(bi:Body,bj:Body,pairs1:Array<Dynamic>,pairs2:Array<Dynamic>):Bool{
+    public function intersectionTest(bi:Body,bj:Body,pairs1:Array<Body>,pairs2:Array<Body>):Bool{
         if(this.useBoundingBoxes){
             this.doBoundingBoxBroadphase(bi,bj,pairs1,pairs2);
         } else {
@@ -126,7 +126,7 @@ class Broadphase {
      * @param Array pairs1 bi is appended to this array if intersection
      * @param Array pairs2 bj is appended to this array if intersection
      */
-    public function doBoundingSphereBroadphase(bi:Body,bj:Body,pairs1:Array<Dynamic>,pairs2:Array<Dynamic>){
+    public function doBoundingSphereBroadphase(bi:Body,bj:Body,pairs1:Array<Body>,pairs2:Array<Body>){
         // Local fast access
         var types = Shape.types;
         var BOX_SPHERE_COMPOUND_CONVEX:Int = types.SPHERE | types.BOX | types.COMPOUND | types.CONVEXPOLYHEDRON;
@@ -243,7 +243,7 @@ class Broadphase {
      * @param Array pairs1
      * @param Array pairs2
      */
-    public function doBoundingBoxBroadphase(bi:Body,bj:Body,pairs1:Array<Dynamic>,pairs2:Array<Dynamic>){
+    public function doBoundingBoxBroadphase(bi:Body,bj:Body,pairs1:Array<Body>,pairs2:Array<Body>){
         var bishape = bi.shape;
         var bjshape = bj.shape;
 
@@ -298,7 +298,7 @@ class Broadphase {
      * @param Array pairs1
      * @param Array pairs2
      */
-    public function makePairsUnique (pairs1:Array<Dynamic>,pairs2:Array<Dynamic>){
+    public function makePairsUnique (pairs1:Array<Body>, pairs2:Array<Body>) {
         var t:Map<String, Int> = Broadphase_makePairsUnique_temp;
         var p1 = Broadphase_makePairsUnique_p1;
         var p2 = Broadphase_makePairsUnique_p2;
@@ -319,10 +319,13 @@ class Broadphase {
             t.set(idx, i);
         }
 
-        for(idx in t){
+        for (idx in t) {
             pairs1.push(p1[idx]);
             pairs2.push(p2[idx]);
-            //t[idx] = null;
+        }
+
+        for (id in t.keys()) {
+            t.remove(id);
         }
     }
 }
