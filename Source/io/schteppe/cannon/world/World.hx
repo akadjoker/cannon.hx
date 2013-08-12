@@ -627,7 +627,7 @@ class World extends EventTarget {
             }
         }
 
-        this.dispatchEvent(World_step_postStepEvent);
+        this.dispatchEvent(World_step_preStepEvent);
 
         // Invoke pre-step callbacks
         for(i in 0...N){
