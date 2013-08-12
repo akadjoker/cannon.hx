@@ -4,6 +4,7 @@ import io.schteppe.cannon.math.Vec3;
 import io.schteppe.cannon.objects.Body;
 import io.schteppe.cannon.objects.Plane;
 import io.schteppe.cannon.objects.Shape;
+import io.schteppe.cannon.objects.Sphere;
 import io.schteppe.cannon.world.World;
 
 /**
@@ -29,16 +30,31 @@ class GridBroadphase extends Broadphase {
     var aabbMin:Vec3;
     var aabbMax:Vec3;
     var bins:Array<Array<Body>>;
+    var binLengths:Array<Int>;
 
     public function new(aabbMin:Vec3 = null,aabbMax:Vec3 = null,nx:Int = 10,ny:Int = 10,nz:Int = 10){
         super();
 
         this.aabbMin = aabbMin != null ? aabbMin : new Vec3(100, 100, 100);
         this.aabbMax = aabbMax != null ? aabbMax : new Vec3(100, 100, 100);
+
         this.nx = nx;
         this.ny = ny;
         this.nz = nz;
+
+        var nbins:Int = this.nx * this.ny * this.nz;
+        if (nbins <= 0) {
+            throw "GridBroadphase: Each dimension's n must be >0";
+        }
+
         this.bins = new Array<Array<Body>>();
+        this.binLengths = []; //Rather than continually resizing arrays (thrashing the memory), just record length and allow them to grow
+        //this.bins.length = nbins;
+        //this.binLengths.length = nbins;
+        for (i in 0...nbins) {
+            this.bins[i]=[];
+            this.binLengths[i] = 0;
+        }
 
         GridBroadphase_collisionPairs_d = new Vec3();
         GridBroadphase_collisionPairs_binPos = new Vec3();
@@ -63,6 +79,10 @@ class GridBroadphase extends Broadphase {
         var ny:Float = this.ny;
         var nz:Float = this.nz;
 
+        var xstep:Int = this.ny * this.nz;
+        var ystep:Int = this.nz;
+        var zstep:Int = 1;
+
         var xmax:Float = max.x;
         var ymax:Float = max.y;
         var zmax:Float = max.z;
@@ -78,6 +98,53 @@ class GridBroadphase extends Broadphase {
         var binsizeY:Float = (ymax - ymin) / ny;
         var binsizeZ:Float = (zmax - zmin) / nz;
 
+        var binRadius:Float = Math.sqrt(binsizeX * binsizeX + binsizeY * binsizeY + binsizeZ * binsizeZ) * 0.5;
+
+        function addBoxToBins(
+                x0:Float, y0:Float, z0:Float,
+                x1:Float, y1:Float, z1:Float,
+                bi:Body):Void {
+            var ceil = Math.ceil;
+            var floor = Math.floor;
+
+            var xoff0:Int = floor((x0 - xmin) * xmult);
+            var yoff0:Int = floor((y0 - ymin) * ymult);
+            var zoff0:Int = floor((z0 - zmin) * zmult);
+            var xoff1:Int = ceil((x1 - xmin) * xmult);
+            var yoff1:Int = ceil((y1 - ymin) * ymult);
+            var zoff1:Int = ceil((z1 - zmin) * zmult);
+
+            if (xoff0 < 0) xoff0 = 0; else if (xoff0 >= this.nx) xoff0 = this.nx - 1;
+            if (yoff0 < 0) yoff0 = 0; else if (yoff0 >= this.ny) yoff0 = this.ny - 1;
+            if (zoff0 < 0) zoff0 = 0; else if (zoff0 >= this.nz) zoff0 = this.nz - 1;
+            if (xoff1 < 0) xoff1 = 0; else if (xoff1 >= this.nx) xoff1 = this.nx - 1;
+            if (yoff1 < 0) yoff1 = 0; else if (yoff1 >= this.ny) yoff1 = this.ny - 1;
+            if (zoff1 < 0) zoff1 = 0; else if (zoff1 >= this.nz) zoff1 = this.nz - 1;
+
+            //    console.log("Adding bi "+(bi.adust_object && bi.adust_object.constructor && bi.adust_object.constructor.name)+" to " + xoff0 + "-" + xoff1 + "," + yoff0 + "-" + yoff1 + "," + zoff0 + "-" + zoff1);
+            xoff0 *= xstep;
+            yoff0 *= ystep;
+            zoff0 *= zstep;
+            xoff1 *= xstep;
+            yoff1 *= ystep;
+            zoff1 *= zstep;
+
+            var xoff:Int = xoff0;
+            while (xoff <= xoff1) {
+                var yoff:Int = yoff0;
+                while (yoff <= yoff1) {
+                    var zoff:Int = zoff0;
+                    while (zoff <= zoff1) {
+                        var idx:Int = xoff+yoff+zoff;
+                        bins[idx][binLengths[idx]++] = bi;
+                        zoff += zstep;
+                    }
+                    yoff += ystep;
+                }
+                xoff += xstep;
+            }
+        }
+
         var types:Dynamic = Shape.types;
         var SPHERE:Int =            types.SPHERE;
         var PLANE:Int =             types.PLANE;
@@ -86,100 +153,98 @@ class GridBroadphase extends Broadphase {
         var CONVEXPOLYHEDRON:Int =  types.CONVEXPOLYHEDRON;
 
         var bins = this.bins;
-        var Nbins:Int = this.nx * this.ny * this.nz;
+        //var Nbins:Int = this.nx * this.ny * this.nz;
+        var binLengths:Array<Int> = this.binLengths;
+        var Nbins:Int = this.bins.length;
 
         // Reset bins
-        var binsLength:Int = bins.length - 1;
-        for(i in binsLength...Nbins){
-            bins.push([]);
-        }
         for(i in 0...Nbins){
-            bins[i].splice(0, bins[i].length);
+            binLengths[i] = 0;
         }
 
-        var floor = Math.floor;
+        var ceil = Math.ceil;
+        var min = Math.min;
+        var max = Math.max;
 
         // Put all bodies into the bins
         for(i in 0...N){
             var bi:Body = bodies[i];
             var si:Shape = bi.shape;
 
-            switch(si.type){
-                case 2://PLANE:
-                    // Put in all bins for now
-                    // @todo put only in bins that are actually intersecting the plane
-                    var psi:Plane = cast(si, Plane);
-                    var d = GridBroadphase_collisionPairs_d;
-                    var binPos = GridBroadphase_collisionPairs_binPos;
-                    var binRadiusSquared:Float = (binsizeX*binsizeX + binsizeY*binsizeY + binsizeZ*binsizeZ) * 0.25;
-
-                    var planeNormal:Vec3 = psi.worldNormal;
-                    if(psi.worldNormalNeedsUpdate){
-                        psi.computeWorldNormal(bi.quaternion);
-                    }
-
-                    for(j in 0...this.nx){
-                        for(k in 0...this.ny){
-                            for(l in 0...this.nz){
-                                var xi:Int = j;
-                                var yi:Int = k;
-                                var zi:Int = l;
-
-                                binPos.set(xi*binsizeX+xmin, yi*binsizeY+ymin, zi*binsizeZ+zmin);
-                                binPos.vsub(bi.position, d);
-
-                                if(d.dot(planeNormal) < binRadiusSquared){
-                                    var idx:Int = xi * ( this.ny - 1 ) * ( this.nz - 1 ) + yi * ( this.nz - 1 ) + zi;
-                                    bins[ idx ].push( bi );
-                                }
-                            }
-                        }
-                    }
-
-                default:
+            switch(si.type) {
+                case 1://SPHERE
                     // Put in bin
                     // check if overlap with other bins
+                    var sphere:Sphere = cast(si, Sphere);
                     var x:Float = bi.position.x;
                     var y:Float = bi.position.y;
                     var z:Float = bi.position.z;
-                    var r:Float = si.boundingSphereRadius;
+                    var r:Float = sphere.radius;
 
-                    var xi1:Int = floor(xmult * (x - r - xmin));
-                    var yi1:Int = floor(ymult * (y - r - ymin));
-                    var zi1:Int = floor(zmult * (z - r - zmin));
-                    var xi2:Int = floor(xmult * (x + r - xmin));
-                    var yi2:Int = floor(ymult * (y + r - ymin));
-                    var zi2:Int = floor(zmult * (z + r - zmin));
-
-                    for(j in xi1...xi2+1){
-                        for(k in yi1...yi2+1){
-                            for(l in zi1...zi2+1){
-                                var xi:Int = j;
-                                var yi:Int = k;
-                                var zi:Int = l;
-                                var idx:Int = xi * ( this.ny - 1 ) * (this.nz - 1 ) + yi * ( this.nz - 1 ) + zi;
-                                if(idx >= 0 && idx < Nbins){
-                                    bins[ idx ].push( bi );
-                                }
-                            }
-                        }
+                    addBoxToBins(x-r, y-r, z-r, x+r, y+r, z+r, bi);
+                case 2://PLANE:
+                    var plane:Plane = cast(si, Plane);
+                    if(plane.worldNormalNeedsUpdate){
+                        plane.computeWorldNormal(bi.quaternion);
                     }
-            }
+                    var planeNormal:Vec3 = plane.worldNormal;
+
+                    //Relative position from origin of plane object to the first bin
+                    //Incremented as we iterate through the bins
+                    var xreset:Float = xmin + binsizeX * 0.5 - bi.position.x;
+                    var yreset:Float = ymin + binsizeY * 0.5 - bi.position.y;
+                    var zreset:Float = zmin + binsizeZ * 0.5 - bi.position.z;
+
+                    var d:Vec3 = GridBroadphase_collisionPairs_d;
+                    d.set(xreset, yreset, zreset);
+
+                    var xoff:Int = 0;
+                    for (xi in 0...this.nx) {
+                        var yoff:Int = 0;
+                        for (yi in 0...this.ny) {
+                            var zoff:Int = 0;
+                            for (zi in 0...this.nz) {
+                                if (d.dot(planeNormal) < binRadius) {
+                                    var idx:Int = xoff + yoff + zoff;
+                                    bins[idx][binLengths[idx]++] = bi;
+                                }
+                                zoff += zstep; d.z += binsizeZ;
+                            }
+                            yoff += ystep; d.z = zreset; d.y += binsizeY;
+                        }
+                        xoff += xstep; d.y = yreset; d.x += binsizeX;
+                    }
+                default:
+                    if (bi.aabbNeedsUpdate) {
+                        bi.computeAABB();
+                    }
+
+                    addBoxToBins(
+                        bi.aabbmin.x,
+                        bi.aabbmin.y,
+                        bi.aabbmin.z,
+                        bi.aabbmax.x,
+                        bi.aabbmax.y,
+                        bi.aabbmax.z,
+                        bi);
+                    }
         }
 
         // Check each bin
-        for(i in 0...Nbins){
-            var bin:Array<Dynamic> = bins[i];
+        for (i in 0...Nbins) {
+            var binLength:Int = binLengths[i];
+            if (binLength > 1) {
+                var bin:Array<Body> = bins[i];
 
-            // Do N^2 broadphase inside
-            var NbodiesInBin:Int = bin.length;
-            for(j in 0...NbodiesInBin){
-                var bi = bin[j];
+                // Do N^2 broadphase inside
+                for(xi in 0...binLength){
+                    var bi = bin[xi];
 
-                for(k in 0...j){
-                    var bj = bin[k];
-                    if(this.needBroadphaseCollision(bi,bj)){
-                        this.intersectionTest(bi,bj,p1,p2);
+                    for(yi in 0...xi){
+                        var bj = bin[yi];
+                        if(this.needBroadphaseCollision(bi,bj)){
+                            this.intersectionTest(bi,bj,p1,p2);
+                        }
                     }
                 }
             }
