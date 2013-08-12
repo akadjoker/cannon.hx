@@ -521,63 +521,65 @@ class World extends EventTarget {
             var g:Float = gvec.dot(c.ni); // Gap, negative if penetration
 
             // Action if penetration
-            if (g < 0.0) { 
-                c.restitution = cm.restitution;
-                c.penetration = g;
-                c.stiffness = cm.contactEquationStiffness;
-                c.regularizationTime = cm.contactEquationRegularizationTime;
+            if (g < 0.0) {
+                if (bi.collisionResponse && bj.collisionResponse) {
+                    c.restitution = cm.restitution;
+                    c.penetration = g;
+                    c.stiffness = cm.contactEquationStiffness;
+                    c.regularizationTime = cm.contactEquationRegularizationTime;
 
-                solver.addEquation(c);
+                    solver.addEquation(c);
 
-                // Add friction constraint equation
-                if(mu > 0){
+                    // Add friction constraint equation
+                    if(mu > 0){
 
-                    // Create 2 tangent equations
-                    var mug:Float = mu*gnorm;
-                    var reducedMass:Float = (bi.invMass + bj.invMass);
-                    if(reducedMass > 0.0){
-                        reducedMass = 1.0 / reducedMass;
+                        // Create 2 tangent equations
+                        var mug:Float = mu*gnorm;
+                        var reducedMass:Float = (bi.invMass + bj.invMass);
+                        if(reducedMass > 0.0){
+                            reducedMass = 1.0 / reducedMass;
+                        }
+                        var pool = frictionEquationPool;
+                        var c1:FrictionEquation = pool.length > 0 ? pool.pop() : new FrictionEquation(bi,bj,mug*reducedMass);
+                        var c2:FrictionEquation = pool.length > 0 ? pool.pop() : new FrictionEquation(bi,bj,mug*reducedMass);
+                        this.frictionEquations.push(c1);
+                        this.frictionEquations.push(c2);
+
+                        c1.bi = c2.bi = bi;
+                        c1.bj = c2.bj = bj;
+                        c1.minForce = c2.minForce = -mug*reducedMass;
+                        c1.maxForce = c2.maxForce = mug*reducedMass;
+
+                        // Copy over the relative vectors
+                        c.ri.copy(c1.ri);
+                        c.rj.copy(c1.rj);
+                        c.ri.copy(c2.ri);
+                        c.rj.copy(c2.rj);
+
+                        // Construct tangents
+                        c.ni.tangents(c1.t,c2.t);
+
+                        // Add equations to solver
+                        solver.addEquation(c1);
+                        solver.addEquation(c2);
                     }
-                    var pool = frictionEquationPool;
-                    var c1:FrictionEquation = pool.length > 0 ? pool.pop() : new FrictionEquation(bi,bj,mug*reducedMass);
-                    var c2:FrictionEquation = pool.length > 0 ? pool.pop() : new FrictionEquation(bi,bj,mug*reducedMass);
-                    this.frictionEquations.push(c1);
-                    this.frictionEquations.push(c2);
 
-                    c1.bi = c2.bi = bi;
-                    c1.bj = c2.bj = bj;
-                    c1.minForce = c2.minForce = -mug*reducedMass;
-                    c1.maxForce = c2.maxForce = mug*reducedMass;
+                    // Now we know that i and j are in contact. Set collision matrix state
+                    this.collisionMatrixSet(i,j,1,true);
 
-                    // Copy over the relative vectors
-                    c.ri.copy(c1.ri);
-                    c.rj.copy(c1.rj);
-                    c.ri.copy(c2.ri);
-                    c.rj.copy(c2.rj);
+                    if(this.collisionMatrixGet(i,j,true)!=this.collisionMatrixGet(i,j,false)){
+                        // First contact!
+                        // We reuse the collideEvent object, otherwise we will end up creating new objects for each new contact, even if there's no event listener attached.
+                        World_step_collideEvent.with = bj;
+                        World_step_collideEvent.contact = c;
+                        bi.dispatchEvent(World_step_collideEvent);
 
-                    // Construct tangents
-                    c.ni.tangents(c1.t,c2.t);
+                        World_step_collideEvent.with = bi;
+                        bj.dispatchEvent(World_step_collideEvent);
 
-                    // Add equations to solver
-                    solver.addEquation(c1);
-                    solver.addEquation(c2);
-                }
-
-                // Now we know that i and j are in contact. Set collision matrix state
-                this.collisionMatrixSet(i,j,1,true);
-
-                if(this.collisionMatrixGet(i,j,true)!=this.collisionMatrixGet(i,j,false)){
-                    // First contact!
-                    // We reuse the collideEvent object, otherwise we will end up creating new objects for each new contact, even if there's no event listener attached.
-                    World_step_collideEvent.with = bj;
-                    World_step_collideEvent.contact = c;
-                    bi.dispatchEvent(World_step_collideEvent);
-
-                    World_step_collideEvent.with = bi;
-                    bj.dispatchEvent(World_step_collideEvent);
-
-                    bi.wakeUp();
-                    bj.wakeUp();
+                        bi.wakeUp();
+                        bj.wakeUp();
+                    }
                 }
             }
         }

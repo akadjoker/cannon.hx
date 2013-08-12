@@ -62,6 +62,7 @@ class Body extends EventTarget {
     public var vlambda:Vec3;
     public var collisionFilterGroup:Int;
     public var collisionFilterMask:Int;
+    public var collisionResponse:Bool;
 
     public function new(type:String){
         super();
@@ -95,6 +96,7 @@ class Body extends EventTarget {
 
         this.collisionFilterGroup = 1;
         this.collisionFilterMask = 1;
+        this.collisionResponse = true;
     }
 
     public function wakeUp() { }
