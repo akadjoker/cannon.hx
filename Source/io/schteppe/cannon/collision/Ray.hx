@@ -2,21 +2,21 @@
  * @class CANNON.Ray
  * @author Originally written by mr.doob / http://mrdoob.com/ for Three.js. Cannon.js-ified by schteppe.
  * @brief A line in 3D space that intersects bodies and return points.
- * @param Vec3 origin
- * @param Vec3 direction
+ * @param CANNON.Vec3 origin
+ * @param CANNON.Vec3 direction
  */
 CANNON.Ray = function(origin, direction){
     /**
-    * @property Vec3 origin
+    * @property CANNON.Vec3 origin
     * @memberof CANNON.Ray
     */
-    this.origin = origin || new Vec3();
+    this.origin = origin || new CANNON.Vec3();
 
     /**
-    * @property Vec3 direction
+    * @property CANNON.Vec3 direction
     * @memberof CANNON.Ray
     */
-    this.direction = direction || new Vec3();
+    this.direction = direction || new CANNON.Vec3();
 
     var precision = 0.0001;
 
@@ -30,23 +30,23 @@ CANNON.Ray = function(origin, direction){
         precision = value;
     };
 
-    var a = new Vec3();
-    var b = new Vec3();
-    var c = new Vec3();
-    var d = new Vec3();
+    var a = new CANNON.Vec3();
+    var b = new CANNON.Vec3();
+    var c = new CANNON.Vec3();
+    var d = new CANNON.Vec3();
 
-    var directionCopy = new Vec3();
+    var directionCopy = new CANNON.Vec3();
 
-    var vector = new Vec3();
-    var normal = new Vec3();
-    var intersectPoint = new Vec3();
+    var vector = new CANNON.Vec3();
+    var normal = new CANNON.Vec3();
+    var intersectPoint = new CANNON.Vec3();
 
     /**
      * @method intersectBody
      * @memberof CANNON.Ray
      * @param CANNON.RigidBody body
      * @brief Shoot a ray at a body, get back information about the hit.
-     * @return Array An array of results. The result objects has properties: distance (float), point (Vec3) and body (CANNON.RigidBody).
+     * @return Array An array of results. The result objects has properties: distance (float), point (CANNON.Vec3) and body (CANNON.RigidBody).
      */
     this.intersectBody = function ( body ) {
         if(body.shape instanceof CANNON.ConvexPolyhedron){
@@ -68,8 +68,8 @@ CANNON.Ray = function(origin, direction){
      * @method intersectShape
      * @memberof CANNON.Ray
      * @param CANNON.Shape shape
-     * @param Quaternion quat
-     * @param Vec3 position
+     * @param CANNON.Quaternion quat
+     * @param CANNON.Vec3 position
      * @param CANNON.RigidBody body
      * @return Array See intersectBody()
      */
@@ -184,7 +184,7 @@ CANNON.Ray = function(origin, direction){
         return intersects;
     };
 
-    var v0 = new Vec3(), intersect = new Vec3();
+    var v0 = new CANNON.Vec3(), intersect = new CANNON.Vec3();
     var dot, distance;
 
     function distanceFromIntersection( origin, direction, position ) {
@@ -202,27 +202,28 @@ CANNON.Ray = function(origin, direction){
         return distance;
     }
 
+    // As per "Barycentric Technique" as named here
     // http://www.blackpawn.com/texts/pointinpoly/default.html
+    // But without the division
 
-    var dot00, dot01, dot02, dot11, dot12, invDenom, u, v;
-    var v1 = new Vec3(), v2 = new Vec3();
+    var v1 = new CANNON.Vec3(), v2 = new CANNON.Vec3();
 
     function pointInTriangle( p, a, b, c ) {
         c.vsub(a,v0);
         b.vsub(a,v1);
         p.vsub(a,v2);
 
-        dot00 = v0.dot( v0 );
-        dot01 = v0.dot( v1 );
-        dot02 = v0.dot( v2 );
-        dot11 = v1.dot( v1 );
-        dot12 = v1.dot( v2 );
+        var dot00 = v0.dot( v0 );
+        var dot01 = v0.dot( v1 );
+        var dot02 = v0.dot( v2 );
+        var dot11 = v1.dot( v1 );
+        var dot12 = v1.dot( v2 );
 
-        invDenom = 1 / ( dot00 * dot11 - dot01 * dot01 );
-        u = ( dot11 * dot02 - dot01 * dot12 ) * invDenom;
-        v = ( dot00 * dot12 - dot01 * dot02 ) * invDenom;
+        var u,v;
 
-        return ( u >= 0 ) && ( v >= 0 ) && ( u + v < 1 );
+        return  ( (u = dot11 * dot02 - dot01 * dot12) >= 0 ) &&
+                ( (v = dot00 * dot12 - dot01 * dot02) >= 0 ) &&
+                ( u + v < ( dot00 * dot11 - dot01 * dot01 ) );
     }
 };
 CANNON.Ray.prototype.constructor = CANNON.Ray;

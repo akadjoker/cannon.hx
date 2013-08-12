@@ -3,11 +3,11 @@
  * @brief Hinge constraint. Tries to keep the local body axes equal.
  * @author schteppe
  * @param CANNON.RigidBody bodyA
- * @param Vec3 pivotA A point defined locally in bodyA. This defines the offset of axisA.
- * @param Vec3 axisA an axis that bodyA can rotate around.
+ * @param CANNON.Vec3 pivotA A point defined locally in bodyA. This defines the offset of axisA.
+ * @param CANNON.Vec3 axisA an axis that bodyA can rotate around.
  * @param CANNON.RigidBody bodyB
- * @param Vec3 pivotB
- * @param Vec3 axisB
+ * @param CANNON.Vec3 pivotB
+ * @param CANNON.Vec3 axisB
  * @param float maxForce
  */
 CANNON.HingeConstraint = function(bodyA, pivotA, axisA, bodyB, pivotB, axisB, maxForce){
@@ -43,12 +43,18 @@ CANNON.HingeConstraint = function(bodyA, pivotA, axisA, bodyB, pivotB, axisB, ma
     var unitPivotA = pivotA.unit();
     var unitPivotB = pivotB.unit();
 
-    var axisA_x_pivotA = new Vec3();
-    var axisA_x_axisA_x_pivotA = new Vec3();
-    var axisB_x_pivotB = new Vec3();
+    var axisA_x_pivotA = new CANNON.Vec3();
+    var axisA_x_axisA_x_pivotA = new CANNON.Vec3();
+    var axisB_x_pivotB = new CANNON.Vec3();
     axisA.cross(unitPivotA,axisA_x_pivotA);
+    if(axisA_x_pivotA.norm2() < 0.001){ // pivotA is along the same line as axisA
+        unitPivotA.tangents(axisA_x_pivotA,axisA_x_pivotA);
+    }
     axisA.cross(axisA_x_pivotA,axisA_x_axisA_x_pivotA);
     axisB.cross(unitPivotB,axisB_x_pivotB);
+    if(axisB_x_pivotB.norm2() < 0.001){ // pivotB is along the same line as axisB
+        axisB.tangents(axisB_x_pivotB,axisB_x_pivotB);
+    }
 
     axisA_x_pivotA.normalize();
     axisB_x_pivotB.normalize();
@@ -73,7 +79,7 @@ CANNON.HingeConstraint = function(bodyA, pivotA, axisA, bodyB, pivotB, axisB, ma
         }
     };
 
-    // Update 
+    // Update
     this.update = function(){
         // Update world positions of pivots
         /*
