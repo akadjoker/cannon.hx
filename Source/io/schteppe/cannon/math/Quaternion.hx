@@ -238,33 +238,25 @@ class Quaternion {
      * @param Vec3 target Optional
      * @return Vec3
      */
-    public function vmult(v,target):Vec3{
+    public function vmult(v:Vec3,target:Vec3):Vec3{
         if (target == null) target = new Vec3();
-        if(this.w==0.0){
-            target.x = v.x;
-            target.y = v.y;
-            target.z = v.z;
-        } else {
+        var x:Float = v.x;
+        var y:Float = v.y;
+        var z:Float = v.z;
+        var qx = this.x;
+        var qy = this.y;
+        var qz = this.z;
+        var qw = this.w;
 
-            var x = v.x,
-                y = v.y,
-                z = v.z;
+        // q*v
+        var ix:Float =  qw * x + qy * z - qz * y;
+        var iy:Float =  qw * y + qz * x - qx * z;
+        var iz:Float =  qw * z + qx * y - qy * x;
+        var iw:Float = -qx * x - qy * y - qz * z;
 
-            var qx = this.x,
-                qy = this.y,
-                qz = this.z,
-                qw = this.w;
-
-            // q*v
-            var ix =  qw * x + qy * z - qz * y,
-            iy =  qw * y + qz * x - qx * z,
-            iz =  qw * z + qx * y - qy * x,
-            iw = -qx * x - qy * y - qz * z;
-
-            target.x = ix * qw + iw * -qx + iy * -qz - iz * -qy;
-            target.y = iy * qw + iw * -qy + iz * -qx - ix * -qz;
-            target.z = iz * qw + iw * -qz + ix * -qy - iy * -qx;
-        }
+        target.x = ix * qw + iw * -qx + iy * -qz - iz * -qy;
+        target.y = iy * qw + iw * -qy + iz * -qx - ix * -qz;
+        target.z = iz * qw + iw * -qz + ix * -qy - iy * -qx;
 
         return target;
     }
