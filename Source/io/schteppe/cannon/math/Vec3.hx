@@ -352,11 +352,8 @@ class Vec3 {
      * @param float precision
      * @memberof Vec3
      */
-    public function almostZero(v:Vec3, precision:Float = -1.0):Bool {
-        var p:Float = 1e-6; 
-        if(precision < 0.0){
-            p = 1e-6;
-        }
+    public function almostZero(v:Vec3):Bool {
+        var precision:Float = 1e-6; 
         if( Math.abs(this.x)>precision ||
             Math.abs(this.y)>precision ||
             Math.abs(this.z)>precision){

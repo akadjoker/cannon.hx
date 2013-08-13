@@ -677,7 +677,7 @@ class ContactGenerator {
     }
 
     function convexConvex(result:Array<Dynamic>,si:Dynamic,sj:Dynamic,xi:Vec3,xj:Vec3,qi:Quaternion,qj:Quaternion,bi:Body,bj:Body){
-        var sepAxis = convexConvex_sepAxis;
+        var sepAxis:Vec3 = convexConvex_sepAxis;
         if(si.findSeparatingAxis(sj,xi,qi,xj,qj,sepAxis)){
             var res = [];
             var q = convexConvex_q;

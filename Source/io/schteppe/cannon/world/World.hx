@@ -709,11 +709,9 @@ class World extends EventTarget {
                     switch(s.type){
                     case 2: //PLANE:
                         s.worldNormalNeedsUpdate = true;
-                        break;
                     case 16: //CONVEX:
                         s.worldFaceNormalsNeedsUpdate = true;
                         s.worldVerticesNeedsUpdate = true;
-                        break;
                     }
                 }
             }
