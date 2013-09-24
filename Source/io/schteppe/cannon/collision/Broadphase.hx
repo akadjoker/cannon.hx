@@ -291,6 +291,11 @@ class Broadphase {
         }
     }
 
+    public function addStaticBody(
+            bi:Body):Void {
+        throw "Static geometry not impelemented for this broadphase type.";
+    }
+
     /**
      * @method makePairsUnique
      * @memberof CANNON.Broadphase

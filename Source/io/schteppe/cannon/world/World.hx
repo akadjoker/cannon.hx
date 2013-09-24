@@ -285,10 +285,15 @@ class World extends EventTarget {
     // @param CANNON.Body body
     // @todo If the simulation has not yet started, why recrete and copy arrays for each body? Accumulate in dynamic arrays in this case.
     // @todo Adding an array of bodies should be possible. This would save some loops too
-    public function add(body:Body){
+    public function add(body:Body, isStatic:Bool = false){
         body.id = this.id();
         body.index = this.bodies.length;
-        this.bodies.push(body);
+        if (!isStatic) {
+            this.bodies.push(body);
+        }
+        else {
+            this.broadphase.addStaticBody(body);
+        }
         body.world = this;
         body.position.copy(body.initPosition);
         body.velocity.copy(body.initVelocity);
