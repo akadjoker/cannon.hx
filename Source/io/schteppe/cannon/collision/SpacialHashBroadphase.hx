@@ -33,6 +33,7 @@ class SpacialHashBroadphase extends Broadphase {
 
     var binHash:Map<String, List<Body>>;
     var staticBinHash:Map<String, List<Body>>;
+    var planes:List<Body>;
     var bodyListPool:BodyListPool;
 
     var types:Dynamic;
@@ -63,6 +64,8 @@ class SpacialHashBroadphase extends Broadphase {
 
         this.binHash = new Map<String, List<Body>>();
         this.staticBinHash = new Map<String, List<Body>>();
+        this.planes = new List<Body>();
+        
         this.bodyListPool = new BodyListPool();
 
         types = Shape.types;
@@ -98,7 +101,7 @@ class SpacialHashBroadphase extends Broadphase {
         var min = Math.min;
         var max = Math.max;
 
-        // Put all bodies into the bins
+        // Put all dynamic bodies into the bins
         for(i in 0...N){
             var bi:Body = bodies[i];
             putBodyInBin(bi);
@@ -107,8 +110,15 @@ class SpacialHashBroadphase extends Broadphase {
         // Check each bin
         for (key in binHash.keys()) {
             var bin:List<Body> = binHash[key];
+
             for (bi in bin) {
                 var staticBin:List<Body> = staticBinHash[key];
+                for (bj in planes) {
+                    if (this.needBroadphaseCollision(bi, bj)) {
+                        this.intersectionTest(bi, bj, p1, p2);
+                    }
+                }
+
                 if (staticBin != null) {
                     for (bj in staticBin) {
                         if (this.needBroadphaseCollision(bi, bj)) {
@@ -168,8 +178,10 @@ class SpacialHashBroadphase extends Broadphase {
                         bi,
                         isStatic);
             case 2://PLANE:
-                var plane:Plane = cast(si, Plane);
-                //throw "Not implemented";
+                if (!isStatic) {
+                    throw "Can't add a dynamic plane to this broadphase type.";
+                }
+                planes.add(bi);
             default:
                 if (bi.aabbNeedsUpdate) {
                     bi.computeAABB();
