@@ -288,11 +288,11 @@ class World extends EventTarget {
     public function add(body:Body, isStatic:Bool = false){
         body.id = this.id();
         body.index = this.bodies.length;
-        if (!isStatic) {
-            this.bodies.push(body);
+        if (isStatic && this.broadphase.supportsStaticGeometry()) {
+            this.broadphase.addStaticBody(body);
         }
         else {
-            this.broadphase.addStaticBody(body);
+            this.bodies.push(body);
         }
         body.world = this;
         body.position.copy(body.initPosition);

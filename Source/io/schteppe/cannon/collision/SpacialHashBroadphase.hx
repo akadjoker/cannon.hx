@@ -79,6 +79,10 @@ class SpacialHashBroadphase extends Broadphase {
         GridBroadphase_collisionPairs_binPos = new Vec3();
     }
 
+    public override function supportsStaticGeometry():Bool {
+        return true;
+    }
+
     /**
      * @method collisionPairs
      * @memberof CANNON.SpacialHashBroadphase

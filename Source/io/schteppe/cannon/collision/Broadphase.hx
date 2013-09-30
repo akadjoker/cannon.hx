@@ -65,6 +65,10 @@ class Broadphase {
         throw "collisionPairs not implemented for this BroadPhase class!";
     }
 
+    public function supportsStaticGeometry():Bool {
+        return false;
+    }
+
     /**
      * @method needBroadphaseCollision
      * @memberof CANNON.Broadphase
