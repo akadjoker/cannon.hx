@@ -164,8 +164,8 @@ class Particle extends Body {
     public override function sleepTick(time:Float){
         if(this.allowSleep){
             var sleepState = this.sleepState;
-            var speedSquared = this.velocity.norm2();
-            var speedLimitSquared = Math.pow(this.sleepSpeedLimit,2);
+            var speedSquared:Float = this.velocity.norm2();
+            var speedLimitSquared:Float = Math.pow(this.sleepSpeedLimit,2);
             if(sleepState==0 && speedSquared < speedLimitSquared){
                 this.sleepState = 1; // Sleepy
                 this.timeLastSleepy = time;
