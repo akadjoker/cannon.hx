@@ -33,6 +33,7 @@ class SpacialHashBroadphase extends Broadphase {
 
     var binHash:Map<String, List<Body>>;
     var staticBinHash:Map<String, List<Body>>;
+    var pairHash:Map<String, Bool>;
     var planes:List<Body>;
     var bodyListPool:BodyListPool;
 
@@ -65,7 +66,7 @@ class SpacialHashBroadphase extends Broadphase {
         this.binHash = new Map<String, List<Body>>();
         this.staticBinHash = new Map<String, List<Body>>();
         this.planes = new List<Body>();
-        
+        this.pairHash = new Map<String, Bool>();
         this.bodyListPool = new BodyListPool();
 
         types = Shape.types;
@@ -117,27 +118,37 @@ class SpacialHashBroadphase extends Broadphase {
             for (bi in bin) {
                 var staticBin:List<Body> = staticBinHash[key];
                 for (bj in planes) {
-                    if (this.needBroadphaseCollision(bi, bj)) {
-                        this.intersectionTest(bi, bj, p1, p2);
+                    if (!isAlreadyCollided(bi, bj)) {
+                        if (this.needBroadphaseCollision(bi, bj)) {
+                            this.intersectionTest(bi, bj, p1, p2);
+                        }
                     }
                 }
 
                 if (staticBin != null) {
                     for (bj in staticBin) {
-                        if (this.needBroadphaseCollision(bi, bj)) {
-                            this.intersectionTest(bi, bj, p1, p2);
+                        if (!isAlreadyCollided(bi, bj)) {
+                            if (this.needBroadphaseCollision(bi, bj)) {
+                                this.intersectionTest(bi, bj, p1, p2);
+                            }
                         }
                     }
                 }
 
                 for (bj in bin) {
                     if (bi != bj) {
-                        if (this.needBroadphaseCollision(bi, bj)) {
-                            this.intersectionTest(bi, bj, p1, p2);
+                        if (!isAlreadyCollided(bi, bj)) {
+                            if (this.needBroadphaseCollision(bi, bj)) {
+                                this.intersectionTest(bi, bj, p1, p2);
+                            }
                         }
                     }
                 }
             }
+        }
+
+        for (key in pairHash.keys()) {
+            pairHash.remove(key);
         }
 
         for (key in binHash.keys()) {
@@ -146,8 +157,16 @@ class SpacialHashBroadphase extends Broadphase {
             bodyListPool.release(bodyList);
             binHash.remove(key);
         }
+    }
 
-        this.makePairsUnique(p1,p2);
+    private function isAlreadyCollided(bi:Body, bj:Body):Bool {
+        var id1:Int = bi.id;
+        var id2:Int = bj.id;
+        var idx:String = id1 < id2 ? "" + id1 + "," + id2 : "" + id2 + "," + id1;
+        if (pairHash.exists(idx))
+            return true;
+        pairHash.set(idx, true);
+        return false;
     }
 
     // FIXME: Add a way to remove static bodys
@@ -214,9 +233,9 @@ class SpacialHashBroadphase extends Broadphase {
         var xoff0:Int = floor((x0) * xmult);
         var yoff0:Int = floor((y0) * ymult);
         var zoff0:Int = floor((z0) * zmult);
-        var xoff1:Int = ceil((x1) * xmult);
-        var yoff1:Int = ceil((y1) * ymult);
-        var zoff1:Int = ceil((z1) * zmult);
+        var xoff1:Int = ceil((x1) * xmult) + 1;
+        var yoff1:Int = ceil((y1) * ymult) + 1;
+        var zoff1:Int = ceil((z1) * zmult) + 1;
 
         for (xoff in xoff0...xoff1) {
             for (yoff in yoff0...yoff1) {

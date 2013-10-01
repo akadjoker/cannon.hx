@@ -307,6 +307,8 @@ class Broadphase {
      * @param Array pairs1
      * @param Array pairs2
      */
+    // FIXME: This is probably broken and shouldn't be used, SpacialHashBroadphase
+    // does this before testing collision for optimization.
     public function makePairsUnique (pairs1:Array<Body>, pairs2:Array<Body>) {
         var t:Map<String, Int> = Broadphase_makePairsUnique_temp;
         var p1 = Broadphase_makePairsUnique_p1;
