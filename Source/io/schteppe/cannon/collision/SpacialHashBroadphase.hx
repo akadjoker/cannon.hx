@@ -106,8 +106,7 @@ class SpacialHashBroadphase extends Broadphase {
         var max = Math.max;
 
         // Put all dynamic bodies into the bins
-        for(i in 0...N){
-            var bi:Body = bodies[i];
+        for(bi in bodies){
             putBodyInBin(bi);
         }
 
@@ -132,8 +131,10 @@ class SpacialHashBroadphase extends Broadphase {
                 }
 
                 for (bj in bin) {
-                    if (this.needBroadphaseCollision(bi, bj)) {
-                        this.intersectionTest(bi, bj, p1, p2);
+                    if (bi != bj) {
+                        if (this.needBroadphaseCollision(bi, bj)) {
+                            this.intersectionTest(bi, bj, p1, p2);
+                        }
                     }
                 }
             }
@@ -222,12 +223,7 @@ class SpacialHashBroadphase extends Broadphase {
                 for (zoff in zoff0...zoff1) {
                     var hash:String = "#" + xoff + "#" + yoff + "#" + zoff;
                     var bins:Map<String, List<Body>>;
-                    if (!isStatic) {
-                        bins = binHash;
-                    }
-                    else {
-                        bins = staticBinHash;
-                    }
+                    bins = isStatic ? staticBinHash : binHash;
                     if (bins[hash] == null) {
                         var bin:List<Body> = bodyListPool.get();
                         bin.add(bi);
