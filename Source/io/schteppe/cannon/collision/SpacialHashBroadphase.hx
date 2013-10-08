@@ -76,6 +76,7 @@ class SpacialHashBroadphase extends Broadphase {
         COMPOUND =          types.COMPOUND;
         CONVEXPOLYHEDRON =  types.CONVEXPOLYHEDRON;
 
+        useBoundingBoxes = true;
         GridBroadphase_collisionPairs_d = new Vec3();
         GridBroadphase_collisionPairs_binPos = new Vec3();
     }
@@ -172,6 +173,7 @@ class SpacialHashBroadphase extends Broadphase {
     // FIXME: Add a way to remove static bodys
     public override function addStaticBody(
             bi:Body):Void {
+        bi.computeAABB();
         putBodyInBin(
                 bi,
                 true);

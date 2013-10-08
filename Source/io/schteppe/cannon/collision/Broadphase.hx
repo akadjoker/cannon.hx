@@ -40,7 +40,7 @@ class Broadphase {
          * @property bool useBoundingBoxes
          * @memberof CANNON.Broadphase
          */
-        this.useBoundingBoxes = false;
+        this.useBoundingBoxes = true;
 
         Broadphase_needBroadphaseCollision_STATIC_OR_KINEMATIC = Body.STATIC | Body.KINEMATIC;
         Broadphase_collisionPairs_r = new Vec3(); // Temp objects
@@ -97,7 +97,7 @@ class Broadphase {
         }
 
         // Two planes don't collide
-        if(Std.is(bodyA.shape, Plane) && Std.is(bodyB.shape, Plane)){
+        if(bodyA.shape.type == 2 && bodyB.shape.type == 2){
             return false;
         }
 
