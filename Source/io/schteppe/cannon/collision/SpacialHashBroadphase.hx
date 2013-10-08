@@ -33,6 +33,7 @@ class SpacialHashBroadphase extends Broadphase {
 
     var binHash:Map<String, List<Body>>;
     var staticBinHash:Map<String, List<Body>>;
+
     var pairHash:Map<String, Bool>;
     var planes:List<Body>;
     var bodyListPool:BodyListPool;
@@ -140,7 +141,10 @@ class SpacialHashBroadphase extends Broadphase {
                     if (bi != bj) {
                         if (!isAlreadyCollided(bi, bj)) {
                             if (this.needBroadphaseCollision(bi, bj)) {
-                                this.intersectionTest(bi, bj, p1, p2);
+                                if (this.intersectionTest(bi, bj, p1, p2)) {
+                                    bi.wakeUp();
+                                    bj.wakeUp();
+                                }
                             }
                         }
                     }
