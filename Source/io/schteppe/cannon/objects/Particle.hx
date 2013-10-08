@@ -93,7 +93,7 @@ class Particle extends Body {
         * @memberof CANNON.Particle
         * @brief If the speed (the norm of the velocity) is smaller than this value, the body is considered sleepy.
         */
-        this.sleepSpeedLimit = 0.1;
+        this.sleepSpeedLimit = 0.5;
 
         /**
         * @property float sleepTimeLimit
@@ -103,7 +103,11 @@ class Particle extends Body {
         this.sleepTimeLimit = 1;
 
         this.timeLastSleepy = 0;
+        this.bodiesSleepingInContactWith = new List<Body>();
+    }
 
+    public override function addBodySleepingInContactWith(b:Body) {
+        bodiesSleepingInContactWith.add(b);
     }
 
     /**
@@ -138,11 +142,19 @@ class Particle extends Body {
     * @memberof CANNON.Particle
     * @brief Wake the body up.
     */
-    public override function wakeUp(){
-        var s = this.sleepState;
-        this.sleepState = 0;
-        if(s == 2){
-            this.dispatchEvent({type:"wakeup"});
+    public override function wakeUp() {
+        if (motionstate != 2) {
+            var s = this.sleepState;
+            this.sleepState = 0;
+            if(s == 2){
+                this.dispatchEvent({type:"wakeup"});
+            }
+            for (body in bodiesSleepingInContactWith) {
+                if (!body.isAwake()) {
+                    body.wakeUp();
+                }
+            }
+            bodiesSleepingInContactWith.clear();
         }
     }
 
@@ -153,6 +165,7 @@ class Particle extends Body {
     */
     public function sleep(){
         this.sleepState = 2;
+        force.set(0.0, 0.0, 0.0);
     }
 
     /**
@@ -162,19 +175,22 @@ class Particle extends Body {
     * @brief Called every timestep to update internal sleep timer and change sleep state if needed.
     */
     public override function sleepTick(time:Float){
-        if(this.allowSleep){
+        if(this.allowSleep && motionstate != 2){
             var sleepState = this.sleepState;
             var speedSquared:Float = this.velocity.norm2();
-            var speedLimitSquared:Float = Math.pow(this.sleepSpeedLimit,2);
+            var speedLimitSquared:Float = Math.pow(this.sleepSpeedLimit, 2.0);
+            //if (sleepState != 2)
+            //trace(id +" "+ sleepState +" "+  speedSquared+" "+ speedLimitSquared);
             if(sleepState==0 && speedSquared < speedLimitSquared){
                 this.sleepState = 1; // Sleepy
                 this.timeLastSleepy = time;
                 this.dispatchEvent({type:"sleepy"});
-            } else if(sleepState==1 && speedSquared > speedLimitSquared){
+            } else if((sleepState==1 || (sleepState==2 && motionstate == 4)) && speedSquared > speedLimitSquared){
                 this.wakeUp(); // Wake up
             } else if(sleepState==1 && (time - this.timeLastSleepy ) > this.sleepTimeLimit){
                 this.sleepState = 2; // Sleeping
-                this.dispatchEvent({type:"sleep"});
+                this.dispatchEvent( { type:"sleep" } );
+                trace("sleep " + this.id);
             }
         }
     }

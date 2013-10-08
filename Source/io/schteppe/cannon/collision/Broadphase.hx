@@ -85,9 +85,13 @@ class Broadphase {
         }
 
         // Check motionstate
-        if(((bodyA.motionstate & Broadphase_needBroadphaseCollision_STATIC_OR_KINEMATIC)!=0 || bodyA.isSleeping()) &&
-           ((bodyB.motionstate & Broadphase_needBroadphaseCollision_STATIC_OR_KINEMATIC)!=0 || bodyB.isSleeping())) {
-            // Both bodies are static, kinematic or sleeping. Skip.
+        if(((bodyA.motionstate & Broadphase_needBroadphaseCollision_STATIC_OR_KINEMATIC)!=0) &&
+           ((bodyB.motionstate & Broadphase_needBroadphaseCollision_STATIC_OR_KINEMATIC)!=0)) {
+            // Both bodies are static or kinematic. Skip.
+            return false;
+        }
+
+        if (bodyA.isSleeping() && bodyB.isSleeping()) {
             return false;
         }
 
@@ -114,11 +118,10 @@ class Broadphase {
      */
     public function intersectionTest(bi:Body,bj:Body,pairs1:Array<Body>,pairs2:Array<Body>):Bool{
         if(this.useBoundingBoxes){
-            this.doBoundingBoxBroadphase(bi,bj,pairs1,pairs2);
+            return this.doBoundingBoxBroadphase(bi,bj,pairs1,pairs2);
         } else {
-            this.doBoundingSphereBroadphase(bi,bj,pairs1,pairs2);
+            return this.doBoundingSphereBroadphase(bi,bj,pairs1,pairs2);
         }
-        return true;
     }
 
     /**
@@ -130,7 +133,7 @@ class Broadphase {
      * @param Array pairs1 bi is appended to this array if intersection
      * @param Array pairs2 bj is appended to this array if intersection
      */
-    public function doBoundingSphereBroadphase(bi:Body,bj:Body,pairs1:Array<Body>,pairs2:Array<Body>){
+    public function doBoundingSphereBroadphase(bi:Body,bj:Body,pairs1:Array<Body>,pairs2:Array<Body>):Bool{
         // Local fast access
         var types = Shape.types;
         var BOX_SPHERE_COMPOUND_CONVEX:Int = types.SPHERE | types.BOX | types.COMPOUND | types.CONVEXPOLYHEDRON;
@@ -164,6 +167,7 @@ class Broadphase {
                 if(r.norm2() < boundingRadiusSum*boundingRadiusSum){
                     pairs1.push(bi);
                     pairs2.push(bj);
+                    return true;
                 }
 
                 // --- Sphere/box/compound/convexpoly versus plane ---
@@ -191,6 +195,7 @@ class Broadphase {
                 if(q < 0.0){
                     pairs1.push(bi);
                     pairs2.push(bj);
+                    return true;
                 }
             }
         } else {
@@ -210,6 +215,7 @@ class Broadphase {
                         if(otherSphere.radius*otherSphere.radius >= relpos.norm2()){
                             pairs1.push(particle);
                             pairs2.push(other);
+                            return true;
                         }
                     } else if(type==types.CONVEXPOLYHEDRON || type==types.BOX || type==types.COMPOUND){
 
@@ -221,6 +227,7 @@ class Broadphase {
                         if(R*R >= relpos.norm2()){
                             pairs1.push(particle);
                             pairs2.push(other);
+                            return true;
                         }
                     }
                 } else if(type == types.PLANE){
@@ -232,10 +239,12 @@ class Broadphase {
                     if(normal.dot(relpos)<=0.0){
                         pairs1.push(particle);
                         pairs2.push(other);
+                        return true;
                     }
                 }
             }
         }
+        return false;
     }
 
     /**
@@ -247,7 +256,7 @@ class Broadphase {
      * @param Array pairs1
      * @param Array pairs2
      */
-    public function doBoundingBoxBroadphase(bi:Body,bj:Body,pairs1:Array<Body>,pairs2:Array<Body>){
+    public function doBoundingBoxBroadphase(bi:Body,bj:Body,pairs1:Array<Body>,pairs2:Array<Body>):Bool{
         var bishape = bi.shape;
         var bjshape = bj.shape;
 
@@ -268,6 +277,7 @@ class Broadphase {
                     bi.aabbmin.z > bj.aabbmax.z   ) ){
                 pairs1.push(bi);
                 pairs2.push(bj);
+                return true;
             }
         } else {
             // Particle without shape
@@ -290,9 +300,11 @@ class Broadphase {
                         p.position.z > other.aabbmax.z   ) ){
                     pairs1.push(bi);
                     pairs2.push(bj);
+                    return true;
                 }
             }
         }
+        return false;
     }
 
     public function addStaticBody(

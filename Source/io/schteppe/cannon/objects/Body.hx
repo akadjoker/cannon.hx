@@ -64,6 +64,8 @@ class Body extends EventTarget {
     public var collisionFilterMask:Int;
     public var collisionResponse:Bool;
 
+    public var bodiesSleepingInContactWith:List<Body>;
+
     public function new(type:String){
         super();
 
@@ -97,8 +99,10 @@ class Body extends EventTarget {
         this.collisionFilterGroup = 1;
         this.collisionFilterMask = 1;
         this.collisionResponse = true;
+
     }
 
+    public function addBodySleepingInContactWith(b:Body) {}
     public function wakeUp() { }
     public function sleepTick(time:Float) { }
     public function isAwake():Bool { return false; }

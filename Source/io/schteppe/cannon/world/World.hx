@@ -15,6 +15,7 @@ import io.schteppe.cannon.objects.Shape;
 import io.schteppe.cannon.solver.Solver;
 import io.schteppe.cannon.utils.EventTarget;
 import io.schteppe.cannon.solver.GSSolver;
+import io.schteppe.cannon.utils.Pool;
 
 /**
  * The physics world, where all bodies live.
@@ -45,8 +46,8 @@ class World extends EventTarget {
     public var solver:GSSolver;
     public var constraints:Array<Dynamic>;
     public var contactgen:ContactGenerator;
-    public var collisionMatrix:Array<Dynamic>;
-    public var collisionMatrixPrevious:Array<Dynamic>;
+    public var collisionMatrix:Map<String, CollisionInfo>;
+    public var collisionMatrixPrevious:Map<String, CollisionInfo>;
     public var materials:Array<Material>;
     public var contactmaterials:Array<ContactMaterial>;
     public var mats2cmat:Array<Dynamic>;
@@ -55,6 +56,8 @@ class World extends EventTarget {
     public var doProfiling:Bool;
     public var profile:Dynamic;
     public var subsystems:Array<Dynamic>;
+
+    private var collisionInfoPool:CollisionInfoPool;
 
     var World_step_postStepEvent:Dynamic;
     var World_step_preStepEvent:Dynamic;
@@ -166,11 +169,11 @@ class World extends EventTarget {
         // @property Collision "matrix", size (Nbodies * (Nbodies.length + 1))/2 
         //  @brief It's actually a triangular-shaped array of whether two bodies are touching this step, for reference next step
         // @memberof CANNON.World
-        collisionMatrix = [];
+        collisionMatrix = new Map<String, CollisionInfo>();
         // @property Collision "matrix", size (Nbodies * (Nbodies.length + 1))/2 
         //  @brief collisionMatrix from the previous step
         //  @memberof CANNON.World
-        collisionMatrixPrevious = [];
+        collisionMatrixPrevious = new Map<String, CollisionInfo>();
 
         // @property Array materials
         // @memberof CANNON.World
@@ -206,6 +209,22 @@ class World extends EventTarget {
         // @property Array subystems
         // @memberof CANNON.World
         subsystems = [];
+
+        collisionInfoPool = new CollisionInfoPool();
+    }
+    // generate a hash representing two bodies positions/orientations
+    private function generateBodiesPositionHash(bi:Body, bj:Body):String {
+        if(bi.id > bj.id){
+            var temp:Body = bi;
+            bi = bj;
+            bj = temp;
+        }
+        return generateBodyPositionHash(bi) + generateBodyPositionHash(bj);
+    }
+
+    private function generateBodyPositionHash(b:Body):String {
+        return "#" + Math.floor(b.position.x * 1000.0) + "#" +  Math.floor(b.position.y * 1000.0) + "#" +  Math.floor(b.position.z * 1000.0);// +
+               //"#" + b.quaternion.z + "#" + b.quaternion.y + "#" + b.quaternion.z + "#" + b.quaternion.w;
     }
 
     // @method getContactMaterial
@@ -239,43 +258,46 @@ class World extends EventTarget {
     }
 
     // Keep track of contacts for current and previous timestep
-    // 0: No contact between i and j
-    // 1: Contact
-    function collisionMatrixGet(i:Int,j:Int,current:Bool = true){
+    function collisionMatrixGet(i:Int,j:Int,current:Bool = true):Bool {
         if(j > i){
             var temp = j;
             j = i;
             i = temp;
         }
-        // Reuse i for the index
-        i = (i * (i + 1) >> 1) + j - 1;
-        return current ? this.collisionMatrix[i] : this.collisionMatrixPrevious[i];
+        var hash:String = "#" + i + "#" + j;
+        return current ? this.collisionMatrix.exists(hash) : this.collisionMatrixPrevious.exists(hash);
     }
 
-    function collisionMatrixSet(i:Int,j:Int,value:Dynamic,current:Bool = true){
+    function collisionMatrixSet(i:Int,j:Int,bi:Body,bj:Body,current:Bool = true){
         if(j > i){
             var temp = j;
             j = i;
             i = temp;
         }
-        // Reuse i for the index
-        i = (i*(i + 1)>>1) + j-1;
-        if (current) {
-            this.collisionMatrix[i] = value;
-        }
-        else {
-            this.collisionMatrixPrevious[i] = value;
-        }
+        var hash:String = "#" + i + "#" + j;
+        var collisionInfo:CollisionInfo = collisionInfoPool.get();
+        collisionInfo.bi = bi;
+        collisionInfo.bj = bj;
+        collisionInfo.positionHash = generateBodiesPositionHash(bi, bj);
+        current ? this.collisionMatrix.set(hash, collisionInfo) : this.collisionMatrixPrevious.set(hash, collisionInfo);
+    }
+
+    private function collisionMatrixRemove(key:String, current:Bool):Void {
+        var matrix:Map<String, CollisionInfo> = current ? collisionMatrix : collisionMatrixPrevious;
+        var collisionInfo:CollisionInfo = matrix[key];
+        collisionInfo.bi = null;
+        collisionInfo.bj = null;
+        collisionInfoPool.release(collisionInfo);
+        matrix.remove(key);
     }
 
     // transfer old contact state data to T-1
-    function collisionMatrixTick(){
+    function collisionMatrixTick() {
         var temp = this.collisionMatrixPrevious;
         this.collisionMatrixPrevious = this.collisionMatrix;
         this.collisionMatrix = temp;
-        var l:Int = this.collisionMatrix.length;
-        for (i in 0...l) {
-            this.collisionMatrix[i]=0;
+        for (key in collisionMatrix.keys()) {
+            collisionMatrixRemove(key, true);
         }
     }
 
@@ -289,6 +311,8 @@ class World extends EventTarget {
         body.id = this.id();
         body.index = this.bodies.length;
         if (isStatic && this.broadphase.supportsStaticGeometry()) {
+            body.motionstate = Body.STATIC;
+            cast(body, RigidBody).sleep();
             this.broadphase.addStaticBody(body);
         }
         else {
@@ -305,8 +329,6 @@ class World extends EventTarget {
         }
 
         var n = this.numObjects();
-        // FIXME
-        //this.collisionMatrix.length = n*(n-1)>>1;
     }
 
     // @method addConstraint
@@ -351,9 +373,6 @@ class World extends EventTarget {
         //}
         // FIXME
         throw "Not implemented.";
-        //TODO: Maybe splice out the correct elements?
-        //this.collisionMatrixPrevious.length = 
-        //this.collisionMatrix.length = n*(n-1)>>1;*/
     }
 
     // @method addMaterial
@@ -444,13 +463,15 @@ class World extends EventTarget {
         //}
 
         // Add gravity to all objects
-        for(bi in bodies){
-            if ((bi.motionstate & DYNAMIC) != 0) { // Only for dynamic bodies
-                var f:Vec3 = bi.force;
-                var m:Float = bi.mass;
-                f.x += m*gx;
-                f.y += m*gy;
-                f.z += m*gz;
+        for (bi in bodies) {
+            if (!bi.isSleeping()) {
+                if ((bi.motionstate & DYNAMIC) != 0) { // Only for dynamic bodies
+                    var f:Vec3 = bi.force;
+                    var m:Float = bi.mass;
+                    f.x += m*gx;
+                    f.y += m*gy;
+                    f.z += m*gz;
+                }
             }
         }
 
@@ -510,7 +531,8 @@ class World extends EventTarget {
             var bi = c.bi; var bj = c.bj;
 
             // Resolve indeces
-            var i = Lambda.indexOf(bodies, bi); var j = Lambda.indexOf(bodies, bj);
+            var i = bi.id;// Lambda.indexOf(bodies, bi);
+            var j = bj.id;// Lambda.indexOf(bodies, bj);
 
             // Get collision properties
             var cm:ContactMaterial = this.getContactMaterial(bi.material, bj.material);
@@ -570,9 +592,7 @@ class World extends EventTarget {
                     }
 
                     // Now we know that i and j are in contact. Set collision matrix state
-                    this.collisionMatrixSet(i,j,1,true);
-
-                    if(this.collisionMatrixGet(i,j,true)!=this.collisionMatrixGet(i,j,false)){
+                    if (!this.collisionMatrixGet(i, j, false) && !this.collisionMatrixGet(i, j, true)) {
                         // First contact!
                         // We reuse the collideEvent object, otherwise we will end up creating new objects for each new contact, even if there's no event listener attached.
                         World_step_collideEvent.with = bj;
@@ -585,9 +605,45 @@ class World extends EventTarget {
                         bi.wakeUp();
                         bj.wakeUp();
                     }
+                    this.collisionMatrixSet(i, j, bi, bj, true);
                 }
             }
         }
+
+        // Remove sleeping bodies from contact matrix and store contacts in bodies instead
+        for (key in this.collisionMatrixPrevious.keys()) {
+            var collisionInfo:CollisionInfo = this.collisionMatrixPrevious[key];
+            var bi:Body = collisionInfo.bi;
+            var bj:Body = collisionInfo.bj;
+            if (bi.isSleeping() && bj.isSleeping()) {
+                collisionMatrixRemove(key, false);
+                if (bj.motionstate != 2)
+                    bi.addBodySleepingInContactWith(bj);
+                if (bi.motionstate != 2)
+                    bj.addBodySleepingInContactWith(bi);
+            }
+        }
+
+        // wake up colliding bodies on separation
+        for (key in this.collisionMatrixPrevious.keys()) {
+            var collisionInfo:CollisionInfo = this.collisionMatrixPrevious[key];
+            var bi:Body = collisionInfo.bi;
+            var bj:Body = collisionInfo.bj;
+            var wakeUpOnSeparate:Bool = !this.collisionMatrix.exists(key);
+            var wakeUpOnPositionChange:Bool = false;
+            if (!wakeUpOnSeparate) {
+                var positionHash:String = generateBodiesPositionHash(
+                        bi, bj);
+                if (positionHash != collisionInfo.positionHash) {
+                    wakeUpOnPositionChange = true;
+                }
+            }
+            if (wakeUpOnSeparate || wakeUpOnPositionChange) {
+                bi.wakeUp();
+                bj.wakeUp();
+            }
+        }
+
         if(doProfiling){
             profile.makeContactConstraints = now() - profilingStart;
         }
@@ -674,10 +730,12 @@ class World extends EventTarget {
                 velo.y += force.y * invMass * dt;
                 velo.z += force.z * invMass * dt;
 
-                if(b.angularVelocity != null){
-                    angularVelo.x += tau.x * invInertia.x * dt;
-                    angularVelo.y += tau.y * invInertia.y * dt;
-                    angularVelo.z += tau.z * invInertia.z * dt;
+                if (b.angularVelocity != null) {
+                    if (b.motionstate != 4) {
+                        angularVelo.x += tau.x * invInertia.x * dt;
+                        angularVelo.y += tau.y * invInertia.y * dt;
+                        angularVelo.z += tau.z * invInertia.z * dt;
+                    }
                 }
 
                 // Use new velocity  - leap frog
@@ -759,5 +817,23 @@ class World extends EventTarget {
                 b.sleepTick(this.time);
             }
         }
+    }
+}
+
+class CollisionInfo {
+    public var bi:Body;
+    public var bj:Body;
+    public var positionHash:String;
+    public function new() {}
+}
+
+class CollisionInfoPool extends Pool {
+    public function new() {
+        super();
+        this.type = List;
+    }
+
+    public override function constructObject():Dynamic{
+        return new CollisionInfo();
     }
 }

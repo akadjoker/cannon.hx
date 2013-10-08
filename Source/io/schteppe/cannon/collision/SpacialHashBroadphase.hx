@@ -12,10 +12,10 @@ import io.schteppe.cannon.world.World;
  * @class CANNON.SpacialHashBroadphase
  * @brief Axis aligned uniform grid spacial hash broadphase.
  * @extends CANNON.Broadphase
- * @param int nx size of box along x
- * @param int ny size of box along y
- * @param int nz size of box along z
  */
+
+// FIXME: Optimize for very large shapes
+// FIXME: Kinematic bodies aren't stored in the sleep hash
 
 class SpacialHashBroadphase extends Broadphase {
 
@@ -33,6 +33,12 @@ class SpacialHashBroadphase extends Broadphase {
 
     var binHash:Map<String, List<Body>>;
     var staticBinHash:Map<String, List<Body>>;
+    var sleepingBinHash:Map<String, List<Body>>;
+
+    var tempSleepingBodies:List<Body>;
+
+    var staticBodiesHashes:Map<Body, List<String>>;
+    var sleepingBodiesHashes:Map<Body, List<String>>;
 
     var pairHash:Map<String, Bool>;
     var planes:List<Body>;
@@ -66,9 +72,15 @@ class SpacialHashBroadphase extends Broadphase {
 
         this.binHash = new Map<String, List<Body>>();
         this.staticBinHash = new Map<String, List<Body>>();
+        this.sleepingBinHash = new Map<String, List<Body>>();
+
         this.planes = new List<Body>();
         this.pairHash = new Map<String, Bool>();
         this.bodyListPool = new BodyListPool();
+
+        this.tempSleepingBodies = new List<Body>();
+        this.sleepingBodiesHashes = new Map<Body, List<String>>();
+        this.staticBodiesHashes = new Map<Body, List<String>>();
 
         types = Shape.types;
         SPHERE =            types.SPHERE;
@@ -100,7 +112,7 @@ class SpacialHashBroadphase extends Broadphase {
             p1:Array<Body>,
             p2:Array<Body>) {
         var N:Int = world.numObjects();
-        var bodies:Array<Body> = world.bodies;
+        var bodies:List<Body> = world.bodies;
 
         var binHash = this.binHash;
 
@@ -109,9 +121,28 @@ class SpacialHashBroadphase extends Broadphase {
         var max = Math.max;
 
         // Put all dynamic bodies into the bins
-        for(bi in bodies){
-            putBodyInBin(bi);
+        for (bi in bodies) {
+            /*if (bodyIsSleeping(bi)) {
+                tempSleepingBodies.push(bi);
+            }
+            else {*/
+                putBodyInBin(bi);
+            //}
         }
+
+        // store sleeping bodies
+        /*for (bi in tempSleepingBodies) {
+            trace("add sleeping body " + bi.id);
+            bodies.remove(bi);
+            var hashList:List<String> = new List<String>();
+            putBodyInBin(
+                    bi,
+                    hashList);
+            sleepingBodiesHashes.set(
+                    bi,
+                    hashList);
+        }
+        tempSleepingBodies.clear();*/
 
         // Check each bin
         for (key in binHash.keys()) {
@@ -119,6 +150,8 @@ class SpacialHashBroadphase extends Broadphase {
 
             for (bi in bin) {
                 var staticBin:List<Body> = staticBinHash[key];
+                var sleepingBin:List<Body> = sleepingBinHash[key];
+
                 for (bj in planes) {
                     if (!isAlreadyCollided(bi, bj)) {
                         if (this.needBroadphaseCollision(bi, bj)) {
@@ -137,14 +170,21 @@ class SpacialHashBroadphase extends Broadphase {
                     }
                 }
 
+                /*if (sleepingBin != null) {
+                    for (bj in sleepingBin) {
+                        if (!isAlreadyCollided(bi, bj)) {
+                            if (this.needBroadphaseCollision(bi, bj)) {
+                                this.intersectionTest(bi, bj, p1, p2);
+                            }
+                        }
+                    }
+                }*/
+
                 for (bj in bin) {
                     if (bi != bj) {
                         if (!isAlreadyCollided(bi, bj)) {
                             if (this.needBroadphaseCollision(bi, bj)) {
-                                if (this.intersectionTest(bi, bj, p1, p2)) {
-                                    bi.wakeUp();
-                                    bj.wakeUp();
-                                }
+                                this.intersectionTest(bi, bj, p1, p2);
                             }
                         }
                     }
@@ -178,13 +218,38 @@ class SpacialHashBroadphase extends Broadphase {
     public override function addStaticBody(
             bi:Body):Void {
         bi.computeAABB();
+        var hashList:List<String> = new List<String>();
         putBodyInBin(
                 bi,
+                hashList,
                 true);
+        sleepingBodiesHashes.set(
+                bi,
+                hashList);
+    }
+
+    private function releaseSleepingBodies(key:String, bodies:List<Body>):Void {
+        /*var hashes:List<String> = sleepingBodiesHashes.get(bi);
+
+        sleepingBodiesHashes.remove(bi);
+        bodies.add(bi);
+
+        if (hashes != null) {
+            for (key in hashes) {
+                var bin:List<Body> = sleepingBinHash[key];
+                bin.remove(bi);
+
+                // if sleeping bin length is 0 then remove/return to pool
+                if (bin.length == 0) {
+                    sleepingBinHash.remove(key);
+                }
+            }
+        }*/
     }
 
     private function putBodyInBin(
             bi:Body,
+            hashList:List<String> = null,
             isStatic:Bool = false):Void {
         var si:Shape = bi.shape;
 
@@ -206,6 +271,7 @@ class SpacialHashBroadphase extends Broadphase {
                         y + r,
                         z + r,
                         bi,
+                        hashList,
                         isStatic);
             case 2://PLANE:
                 if (!isStatic) {
@@ -225,14 +291,21 @@ class SpacialHashBroadphase extends Broadphase {
                     bi.aabbmax.y,
                     bi.aabbmax.z,
                     bi,
+                    hashList,
                     isStatic);
         }
     }
 
+    //private function bodyIsSleeping(b:Body):Bool {
+    //    return !b.isAwake() && b.motionstate == 1;
+    //}
+
     private function addBoxToBins(
             x0:Float, y0:Float, z0:Float,
             x1:Float, y1:Float, z1:Float,
-            bi:Body, isStatic:Bool = false):Void {
+            bi:Body,
+            hashList:List<String> = null,
+            isStatic:Bool = false):Void {
         var ceil = Math.ceil;
         var floor = Math.floor;
 
@@ -247,8 +320,16 @@ class SpacialHashBroadphase extends Broadphase {
             for (yoff in yoff0...yoff1) {
                 for (zoff in zoff0...zoff1) {
                     var hash:String = "#" + xoff + "#" + yoff + "#" + zoff;
+                    if (hashList != null) {
+                        hashList.push(hash);
+                    }
                     var bins:Map<String, List<Body>>;
-                    bins = isStatic ? staticBinHash : binHash;
+                    if (!isStatic) {
+                        bins = binHash;// bodyIsSleeping(bi) ? sleepingBinHash : binHash;
+                    }
+                    else {
+                        bins = staticBinHash;
+                    }
                     if (bins[hash] == null) {
                         var bin:List<Body> = bodyListPool.get();
                         bin.add(bi);
