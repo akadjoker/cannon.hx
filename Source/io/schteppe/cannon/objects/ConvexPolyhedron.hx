@@ -632,17 +632,17 @@ class ConvexPolyhedron extends Shape {
     }
 
     function normalOfFace(i:Int,target:Vec3){
-        var f = this.faces[i];
-        var va = this.vertices[f[0]];
-        var vb = this.vertices[f[1]];
-        var vc = this.vertices[f[2]];
+        var f:Array<Int> = this.faces[i];
+        var va:Vec3 = this.vertices[f[0]];
+        var vb:Vec3 = this.vertices[f[1]];
+        var vc:Vec3 = this.vertices[f[2]];
         return normal(va,vb,vc,target);
     }
 
     function planeConstant(face_i:Int,target:Dynamic= null):Float{
-        var f = this.faces[face_i];
-        var n = this.faceNormals[face_i];
-        var v = this.vertices[f[0]];
+        var f:Array<Int> = this.faces[face_i];
+        var n:Vec3 = this.faceNormals[face_i];
+        var v:Vec3 = this.vertices[f[0]];
         var c:Float = -n.dot(v);
         return c;
     }

@@ -78,7 +78,7 @@ class Quaternion {
      * @param Vec3 axis
      * @param float angle in radians
      */
-    public function setFromAxisAngle(axis,angle):Void{
+    public function setFromAxisAngle(axis:Vec3,angle:Float):Void{
         var s:Float = Math.sin(angle*0.5);
         this.x = axis.x * s;
         this.y = axis.y * s;
