@@ -52,7 +52,7 @@ class GSSolver extends Solver {
         //var b = this.b;
         var equations:Array<Equation> = this.equations;
         var Neq:Int = equations.length;
-        var bodies:Array<Body> = world.bodies;
+        var bodies:List<Body> = world.bodies;
         var Nbodies:Int = bodies.length;
         var h:Float = dt;
         var q:Float;
@@ -85,8 +85,7 @@ class GSSolver extends Solver {
         if(Neq != 0){
 
             // Reset vlambda
-            for(i  in 0...Nbodies){
-                var b = bodies[i];
+            for(b in bodies){
                 var vlambda:Vec3 = b.vlambda;
                 var wlambda:Vec3 = b.wlambda;
                 vlambda.set(0,0,0);
@@ -133,8 +132,7 @@ class GSSolver extends Solver {
             }
 
             // Add result to velocity
-            for(i in 0...Nbodies){
-                var b = bodies[i];
+            for(b in bodies){
                 var v:Vec3 = b.velocity;
                 var w:Vec3 = b.angularVelocity;
                 v.vadd(b.vlambda, v);

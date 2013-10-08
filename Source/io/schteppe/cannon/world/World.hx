@@ -29,7 +29,7 @@ import io.schteppe.cannon.solver.GSSolver;
 class World extends EventTarget {
 
     public var default_dt:Float;
-    public var bodies:Array<Body>;
+    public var bodies:List<Body>;
     public var allowSleep:Bool;
     public var contacts:Array<Dynamic>;
     public var frictionEquations:Array<Dynamic>;
@@ -147,7 +147,7 @@ class World extends EventTarget {
 
         // @property Array bodies
         // @memberof CANNON.World
-        bodies = [];
+        bodies = new List<Body>();
 
         th = this;
 
@@ -345,10 +345,10 @@ class World extends EventTarget {
         body.world = null;
         var n = this.numObjects()-1;
         var bodies = this.bodies;
-        bodies.splice(body.index, 1);
-        for(i in (body.index)...n) {
-            bodies[i].index=i;
-        }
+        bodies.remove(body);
+        //for(i in (body.index)...n) {
+        //    bodies[i].index=i;
+        //}
         // FIXME
         throw "Not implemented.";
         //TODO: Maybe splice out the correct elements?
@@ -418,7 +418,7 @@ class World extends EventTarget {
         var p1 = World_step_p1;
         var p2 = World_step_p2;
         var N:Int = this.numObjects();
-        var bodies:Array<Body> = this.bodies;
+        var bodies:List<Body> = this.bodies;
         var solver:Solver = this.solver;
         var gravity:Vec3 = this.gravity;
         var doProfiling = this.doProfiling;
@@ -620,8 +620,7 @@ class World extends EventTarget {
 
         // Apply damping, see http://code.google.com/p/bullet/issues/detail?id=74 for details
         var pow = Math.pow;
-        for(i in 0...N){
-            var bi = bodies[i];
+        for(bi in bodies){
             if((bi.motionstate & DYNAMIC) != 0){ // Only for dynamic bodies
                 var ld:Float = pow(1.0 - bi.linearDamping,dt);
                 var v:Vec3 = bi.velocity;
@@ -637,8 +636,7 @@ class World extends EventTarget {
         this.dispatchEvent(World_step_preStepEvent);
 
         // Invoke pre-step callbacks
-        for(i in 0...N){
-            var bi = bodies[i];
+        for(bi in bodies){
             if(bi.preStep != null){
                 bi.preStep(bi);
             }
@@ -661,8 +659,7 @@ class World extends EventTarget {
         var PLANE:Int = Shape.types.PLANE;
         var CONVEX:Int = Shape.types.CONVEXPOLYHEDRON;
 
-        for(i in 0...N){
-            var b:Body = bodies[i];
+        for(b in bodies){
             var s:Shape = b.shape;
             var force:Vec3 = b.force;
             var tau:Vec3 = b.tau;
@@ -738,8 +735,7 @@ class World extends EventTarget {
         this.dispatchEvent(World_step_postStepEvent);
 
         // Invoke post-step callbacks
-        for(i in 0...N){
-            var bi = bodies[i];
+        for(bi in bodies){
             var postStep = bi.postStep;
             if (postStep != null) {
                 postStep(bi);
@@ -748,8 +744,7 @@ class World extends EventTarget {
 
         // Update world inertias
         // @todo should swap autoUpdate mechanism for .xxxNeedsUpdate
-        for(i in 0...N){
-            var b = bodies[i];
+        for(b in bodies){
             if(b.inertiaWorldAutoUpdate){
                 b.quaternion.vmult(b.inertia,b.inertiaWorld);
             }
@@ -760,8 +755,8 @@ class World extends EventTarget {
 
         // Sleeping update
         if(this.allowSleep){
-            for(i in 0...N){
-                bodies[i].sleepTick(this.time);
+            for(b in bodies) {
+                b.sleepTick(this.time);
             }
         }
     }

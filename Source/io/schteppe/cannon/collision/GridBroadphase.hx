@@ -71,7 +71,7 @@ class GridBroadphase extends Broadphase {
 
     public override function collisionPairs(world:World,p1:Array<Body>,p2:Array<Body>){
         var N:Int = world.numObjects();
-        var bodies:Array<Body> = world.bodies;
+        var bodies:List<Body> = world.bodies;
 
         var max:Vec3 = this.aabbMax;
         var min:Vec3 = this.aabbMin;
@@ -167,8 +167,7 @@ class GridBroadphase extends Broadphase {
         var max = Math.max;
 
         // Put all bodies into the bins
-        for(i in 0...N){
-            var bi:Body = bodies[i];
+        for(bi in bodies) {
             var si:Shape = bi.shape;
 
             switch(si.type) {

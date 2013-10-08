@@ -23,17 +23,13 @@ class NaiveBroadphase extends Broadphase {
      * @param Array pairs2
      */
     public override function collisionPairs(world:World,pairs1:Array<Body>,pairs2:Array<Body>){
-        var bodies:Array<Body> = world.bodies;
+        var bodies:List<Body> = world.bodies;
         var n:Int = bodies.length;
         var i:Int; var j:Int; var bi:Body; var bj:Body;
 
         // Naive N^2 ftw!
-        for(i in 0...n){
-            for(j in 0...i){
-
-                bi = bodies[i];
-                bj = bodies[j];
-
+        for(bi in bodies) {
+            for(bj in bodies) {
                 if(!this.needBroadphaseCollision(bi,bj)){
                     continue;
                 }
